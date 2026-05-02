@@ -37,3 +37,93 @@ export interface ContactResponse {
 export interface ErrorResponse {
   error: string;
 }
+
+export interface ProjectImage {
+  id: string;
+  /** Either an absolute public path (e.g. /images/foo.jpg) or an object storage path (e.g. /objects/uploads/uuid). */
+  imagePath: string;
+  sortOrder: number;
+}
+
+export interface Project {
+  id: string;
+  slug: string;
+  title: string;
+  year: number;
+  /** Project location category (e.g. quinta-region, region-metropolitana, argentina). */
+  location: string;
+  /** Project type category (e.g. residencial-casa, residencial-departamento, oficinas). */
+  type: string;
+  description: string;
+  coverImagePath: string;
+  sortOrder: number;
+  images: ProjectImage[];
+}
+
+export type ProjectInputLocation =
+  (typeof ProjectInputLocation)[keyof typeof ProjectInputLocation];
+
+export const ProjectInputLocation = {
+  "quinta-region": "quinta-region",
+  "region-metropolitana": "region-metropolitana",
+  argentina: "argentina",
+} as const;
+
+export type ProjectInputType =
+  (typeof ProjectInputType)[keyof typeof ProjectInputType];
+
+export const ProjectInputType = {
+  "residencial-casa": "residencial-casa",
+  "residencial-departamento": "residencial-departamento",
+  oficinas: "oficinas",
+} as const;
+
+export interface ProjectInput {
+  /**
+   * @minLength 1
+   * @maxLength 120
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
+  title: string;
+  /**
+   * @minimum 1900
+   * @maximum 2100
+   */
+  year: number;
+  location: ProjectInputLocation;
+  type: ProjectInputType;
+  /** @maxLength 4000 */
+  description?: string;
+  /** @minLength 1 */
+  coverImagePath: string;
+  sortOrder?: number;
+}
+
+export type ReplaceImagesRequestImagesItem = {
+  /** @minLength 1 */
+  imagePath: string;
+};
+
+export interface ReplaceImagesRequest {
+  images: ReplaceImagesRequestImagesItem[];
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}

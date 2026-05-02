@@ -50,3 +50,352 @@ export const SubmitContactBody = zod.object({
 export const SubmitContactResponse = zod.object({
   ok: zod.boolean(),
 });
+
+/**
+ * Returns all projects ordered by sortOrder, including each project's gallery images.
+ * @summary List published projects
+ */
+export const ListProjectsResponseItem = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
+
+/**
+ * @summary Get project by slug
+ */
+export const GetProjectBySlugParams = zod.object({
+  slug: zod.coerce.string(),
+});
+
+export const GetProjectBySlugResponse = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary List all projects (admin)
+ */
+export const AdminListProjectsResponseItem = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+export const AdminListProjectsResponse = zod.array(
+  AdminListProjectsResponseItem,
+);
+
+/**
+ * @summary Create a new project
+ */
+export const adminCreateProjectBodySlugMax = 120;
+
+export const adminCreateProjectBodySlugRegExp = new RegExp(
+  "^[a-z0-9]+(?:-[a-z0-9]+)\*$",
+);
+export const adminCreateProjectBodyTitleMax = 200;
+
+export const adminCreateProjectBodyYearMin = 1900;
+export const adminCreateProjectBodyYearMax = 2100;
+
+export const adminCreateProjectBodyDescriptionMax = 4000;
+
+export const AdminCreateProjectBody = zod.object({
+  slug: zod
+    .string()
+    .min(1)
+    .max(adminCreateProjectBodySlugMax)
+    .regex(adminCreateProjectBodySlugRegExp),
+  title: zod.string().min(1).max(adminCreateProjectBodyTitleMax),
+  year: zod
+    .number()
+    .min(adminCreateProjectBodyYearMin)
+    .max(adminCreateProjectBodyYearMax),
+  location: zod.enum(["quinta-region", "region-metropolitana", "argentina"]),
+  type: zod.enum(["residencial-casa", "residencial-departamento", "oficinas"]),
+  description: zod
+    .string()
+    .max(adminCreateProjectBodyDescriptionMax)
+    .optional(),
+  coverImagePath: zod.string().min(1),
+  sortOrder: zod.number().optional(),
+});
+
+/**
+ * @summary Get project by id (admin)
+ */
+export const AdminGetProjectParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const AdminGetProjectResponse = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary Update a project
+ */
+export const AdminUpdateProjectParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const adminUpdateProjectBodySlugMax = 120;
+
+export const adminUpdateProjectBodySlugRegExp = new RegExp(
+  "^[a-z0-9]+(?:-[a-z0-9]+)\*$",
+);
+export const adminUpdateProjectBodyTitleMax = 200;
+
+export const adminUpdateProjectBodyYearMin = 1900;
+export const adminUpdateProjectBodyYearMax = 2100;
+
+export const adminUpdateProjectBodyDescriptionMax = 4000;
+
+export const AdminUpdateProjectBody = zod.object({
+  slug: zod
+    .string()
+    .min(1)
+    .max(adminUpdateProjectBodySlugMax)
+    .regex(adminUpdateProjectBodySlugRegExp),
+  title: zod.string().min(1).max(adminUpdateProjectBodyTitleMax),
+  year: zod
+    .number()
+    .min(adminUpdateProjectBodyYearMin)
+    .max(adminUpdateProjectBodyYearMax),
+  location: zod.enum(["quinta-region", "region-metropolitana", "argentina"]),
+  type: zod.enum(["residencial-casa", "residencial-departamento", "oficinas"]),
+  description: zod
+    .string()
+    .max(adminUpdateProjectBodyDescriptionMax)
+    .optional(),
+  coverImagePath: zod.string().min(1),
+  sortOrder: zod.number().optional(),
+});
+
+export const AdminUpdateProjectResponse = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary Delete a project
+ */
+export const AdminDeleteProjectParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+/**
+ * Replaces the entire ordered gallery for the project with the provided list.
+ * @summary Replace gallery images for a project
+ */
+export const AdminReplaceProjectImagesParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const AdminReplaceProjectImagesBody = zod.object({
+  images: zod.array(
+    zod.object({
+      imagePath: zod.string().min(1),
+    }),
+  ),
+});
+
+export const AdminReplaceProjectImagesResponse = zod.object({
+  id: zod.string().uuid(),
+  slug: zod.string(),
+  title: zod.string(),
+  year: zod.number(),
+  location: zod
+    .string()
+    .describe(
+      "Project location category (e.g. quinta-region, region-metropolitana, argentina).",
+    ),
+  type: zod
+    .string()
+    .describe(
+      "Project type category (e.g. residencial-casa, residencial-departamento, oficinas).",
+    ),
+  description: zod.string(),
+  coverImagePath: zod.string(),
+  sortOrder: zod.number(),
+  images: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      imagePath: zod
+        .string()
+        .describe(
+          "Either an absolute public path (e.g. \/images\/foo.jpg) or an object storage path (e.g. \/objects\/uploads\/uuid).",
+        ),
+      sortOrder: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+metadata here, then uploads the file directly to the returned URL.
+
+ * @summary Request a presigned URL for file upload
+ */
+
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string().min(1),
+  size: zod.number().min(1),
+  contentType: zod.string().min(1),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string().url(),
+  objectPath: zod.string(),
+  metadata: zod
+    .object({
+      name: zod.string().min(1),
+      size: zod.number().min(1),
+      contentType: zod.string().min(1),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Serve a public asset
+ */
+export const GetPublicObjectParams = zod.object({
+  filePath: zod.coerce.string(),
+});
+
+/**
+ * @summary Serve an uploaded object entity
+ */
+export const GetStorageObjectParams = zod.object({
+  objectPath: zod.coerce.string(),
+});

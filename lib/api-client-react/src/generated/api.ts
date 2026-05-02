@@ -21,6 +21,11 @@ import type {
   ContactResponse,
   ErrorResponse,
   HealthStatus,
+  Project,
+  ProjectInput,
+  ReplaceImagesRequest,
+  UploadUrlRequest,
+  UploadUrlResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -194,3 +199,940 @@ export const useSubmitContact = <
 > => {
   return useMutation(getSubmitContactMutationOptions(options));
 };
+
+/**
+ * Returns all projects ordered by sortOrder, including each project's gallery images.
+ * @summary List published projects
+ */
+export const getListProjectsUrl = () => {
+  return `/api/projects`;
+};
+
+export const listProjects = async (
+  options?: RequestInit,
+): Promise<Project[]> => {
+  return customFetch<Project[]>(getListProjectsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListProjectsQueryKey = () => {
+  return [`/api/projects`] as const;
+};
+
+export const getListProjectsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProjects>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listProjects>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProjectsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjects>>> = ({
+    signal,
+  }) => listProjects({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProjects>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListProjectsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listProjects>>
+>;
+export type ListProjectsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List published projects
+ */
+
+export function useListProjects<
+  TData = Awaited<ReturnType<typeof listProjects>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listProjects>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListProjectsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get project by slug
+ */
+export const getGetProjectBySlugUrl = (slug: string) => {
+  return `/api/projects/${slug}`;
+};
+
+export const getProjectBySlug = async (
+  slug: string,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getGetProjectBySlugUrl(slug), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetProjectBySlugQueryKey = (slug: string) => {
+  return [`/api/projects/${slug}`] as const;
+};
+
+export const getGetProjectBySlugQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProjectBySlug>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  slug: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProjectBySlug>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProjectBySlugQueryKey(slug);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getProjectBySlug>>
+  > = ({ signal }) => getProjectBySlug(slug, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!slug,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProjectBySlug>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProjectBySlugQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProjectBySlug>>
+>;
+export type GetProjectBySlugQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get project by slug
+ */
+
+export function useGetProjectBySlug<
+  TData = Awaited<ReturnType<typeof getProjectBySlug>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  slug: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProjectBySlug>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProjectBySlugQueryOptions(slug, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all projects (admin)
+ */
+export const getAdminListProjectsUrl = () => {
+  return `/api/admin/projects`;
+};
+
+export const adminListProjects = async (
+  options?: RequestInit,
+): Promise<Project[]> => {
+  return customFetch<Project[]>(getAdminListProjectsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListProjectsQueryKey = () => {
+  return [`/api/admin/projects`] as const;
+};
+
+export const getAdminListProjectsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListProjects>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListProjects>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminListProjectsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminListProjects>>
+  > = ({ signal }) => adminListProjects({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminListProjects>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminListProjectsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminListProjects>>
+>;
+export type AdminListProjectsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List all projects (admin)
+ */
+
+export function useAdminListProjects<
+  TData = Awaited<ReturnType<typeof adminListProjects>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListProjects>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListProjectsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new project
+ */
+export const getAdminCreateProjectUrl = () => {
+  return `/api/admin/projects`;
+};
+
+export const adminCreateProject = async (
+  projectInput: ProjectInput,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getAdminCreateProjectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(projectInput),
+  });
+};
+
+export const getAdminCreateProjectMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateProject>>,
+    TError,
+    { data: BodyType<ProjectInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCreateProject>>,
+  TError,
+  { data: BodyType<ProjectInput> },
+  TContext
+> => {
+  const mutationKey = ["adminCreateProject"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCreateProject>>,
+    { data: BodyType<ProjectInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminCreateProject(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminCreateProjectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCreateProject>>
+>;
+export type AdminCreateProjectMutationBody = BodyType<ProjectInput>;
+export type AdminCreateProjectMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a new project
+ */
+export const useAdminCreateProject = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateProject>>,
+    TError,
+    { data: BodyType<ProjectInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminCreateProject>>,
+  TError,
+  { data: BodyType<ProjectInput> },
+  TContext
+> => {
+  return useMutation(getAdminCreateProjectMutationOptions(options));
+};
+
+/**
+ * @summary Get project by id (admin)
+ */
+export const getAdminGetProjectUrl = (id: string) => {
+  return `/api/admin/projects/${id}`;
+};
+
+export const adminGetProject = async (
+  id: string,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getAdminGetProjectUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminGetProjectQueryKey = (id: string) => {
+  return [`/api/admin/projects/${id}`] as const;
+};
+
+export const getAdminGetProjectQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetProject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminGetProject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminGetProjectQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetProject>>> = ({
+    signal,
+  }) => adminGetProject(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetProject>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetProjectQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetProject>>
+>;
+export type AdminGetProjectQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get project by id (admin)
+ */
+
+export function useAdminGetProject<
+  TData = Awaited<ReturnType<typeof adminGetProject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminGetProject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetProjectQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a project
+ */
+export const getAdminUpdateProjectUrl = (id: string) => {
+  return `/api/admin/projects/${id}`;
+};
+
+export const adminUpdateProject = async (
+  id: string,
+  projectInput: ProjectInput,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getAdminUpdateProjectUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(projectInput),
+  });
+};
+
+export const getAdminUpdateProjectMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateProject>>,
+    TError,
+    { id: string; data: BodyType<ProjectInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdateProject>>,
+  TError,
+  { id: string; data: BodyType<ProjectInput> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdateProject"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdateProject>>,
+    { id: string; data: BodyType<ProjectInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUpdateProject(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdateProjectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdateProject>>
+>;
+export type AdminUpdateProjectMutationBody = BodyType<ProjectInput>;
+export type AdminUpdateProjectMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a project
+ */
+export const useAdminUpdateProject = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateProject>>,
+    TError,
+    { id: string; data: BodyType<ProjectInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdateProject>>,
+  TError,
+  { id: string; data: BodyType<ProjectInput> },
+  TContext
+> => {
+  return useMutation(getAdminUpdateProjectMutationOptions(options));
+};
+
+/**
+ * @summary Delete a project
+ */
+export const getAdminDeleteProjectUrl = (id: string) => {
+  return `/api/admin/projects/${id}`;
+};
+
+export const adminDeleteProject = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getAdminDeleteProjectUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getAdminDeleteProjectMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteProject>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDeleteProject>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminDeleteProject"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDeleteProject>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminDeleteProject(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDeleteProjectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDeleteProject>>
+>;
+
+export type AdminDeleteProjectMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete a project
+ */
+export const useAdminDeleteProject = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteProject>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDeleteProject>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getAdminDeleteProjectMutationOptions(options));
+};
+
+/**
+ * Replaces the entire ordered gallery for the project with the provided list.
+ * @summary Replace gallery images for a project
+ */
+export const getAdminReplaceProjectImagesUrl = (id: string) => {
+  return `/api/admin/projects/${id}/images`;
+};
+
+export const adminReplaceProjectImages = async (
+  id: string,
+  replaceImagesRequest: ReplaceImagesRequest,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getAdminReplaceProjectImagesUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(replaceImagesRequest),
+  });
+};
+
+export const getAdminReplaceProjectImagesMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminReplaceProjectImages>>,
+    TError,
+    { id: string; data: BodyType<ReplaceImagesRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminReplaceProjectImages>>,
+  TError,
+  { id: string; data: BodyType<ReplaceImagesRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminReplaceProjectImages"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminReplaceProjectImages>>,
+    { id: string; data: BodyType<ReplaceImagesRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminReplaceProjectImages(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminReplaceProjectImagesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminReplaceProjectImages>>
+>;
+export type AdminReplaceProjectImagesMutationBody =
+  BodyType<ReplaceImagesRequest>;
+export type AdminReplaceProjectImagesMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Replace gallery images for a project
+ */
+export const useAdminReplaceProjectImages = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminReplaceProjectImages>>,
+    TError,
+    { id: string; data: BodyType<ReplaceImagesRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminReplaceProjectImages>>,
+  TError,
+  { id: string; data: BodyType<ReplaceImagesRequest> },
+  TContext
+> => {
+  return useMutation(getAdminReplaceProjectImagesMutationOptions(options));
+};
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+metadata here, then uploads the file directly to the returned URL.
+
+ * @summary Request a presigned URL for file upload
+ */
+export const getRequestUploadUrlUrl = () => {
+  return `/api/storage/uploads/request-url`;
+};
+
+export const requestUploadUrl = async (
+  uploadUrlRequest: UploadUrlRequest,
+  options?: RequestInit,
+): Promise<UploadUrlResponse> => {
+  return customFetch<UploadUrlResponse>(getRequestUploadUrlUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(uploadUrlRequest),
+  });
+};
+
+export const getRequestUploadUrlMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<UploadUrlRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<UploadUrlRequest> },
+  TContext
+> => {
+  const mutationKey = ["requestUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    { data: BodyType<UploadUrlRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestUploadUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestUploadUrl>>
+>;
+export type RequestUploadUrlMutationBody = BodyType<UploadUrlRequest>;
+export type RequestUploadUrlMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const useRequestUploadUrl = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<UploadUrlRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<UploadUrlRequest> },
+  TContext
+> => {
+  return useMutation(getRequestUploadUrlMutationOptions(options));
+};
+
+/**
+ * @summary Serve a public asset
+ */
+export const getGetPublicObjectUrl = (filePath: string) => {
+  return `/api/storage/public-objects/${filePath}`;
+};
+
+export const getPublicObject = async (
+  filePath: string,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetPublicObjectUrl(filePath), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicObjectQueryKey = (filePath: string) => {
+  return [`/api/storage/public-objects/${filePath}`] as const;
+};
+
+export const getGetPublicObjectQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicObject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  filePath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPublicObjectQueryKey(filePath);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicObject>>> = ({
+    signal,
+  }) => getPublicObject(filePath, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!filePath,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicObject>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicObjectQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicObject>>
+>;
+export type GetPublicObjectQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Serve a public asset
+ */
+
+export function useGetPublicObject<
+  TData = Awaited<ReturnType<typeof getPublicObject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  filePath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicObjectQueryOptions(filePath, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Serve an uploaded object entity
+ */
+export const getGetStorageObjectUrl = (objectPath: string) => {
+  return `/api/storage/objects/${objectPath}`;
+};
+
+export const getStorageObject = async (
+  objectPath: string,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetStorageObjectUrl(objectPath), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetStorageObjectQueryKey = (objectPath: string) => {
+  return [`/api/storage/objects/${objectPath}`] as const;
+};
+
+export const getGetStorageObjectQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStorageObject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  objectPath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStorageObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStorageObjectQueryKey(objectPath);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStorageObject>>
+  > = ({ signal }) =>
+    getStorageObject(objectPath, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!objectPath,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStorageObject>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetStorageObjectQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStorageObject>>
+>;
+export type GetStorageObjectQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Serve an uploaded object entity
+ */
+
+export function useGetStorageObject<
+  TData = Awaited<ReturnType<typeof getStorageObject>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  objectPath: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStorageObject>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetStorageObjectQueryOptions(objectPath, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

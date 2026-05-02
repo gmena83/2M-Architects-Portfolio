@@ -1,42 +1,28 @@
-/**
- * PARA EDITAR O AGREGAR PROYECTOS:
- *
- * 1. Agrega las imágenes del proyecto en la carpeta `public/images/`.
- *    Se recomienda usar un formato como `public/images/nombre-proyecto-cover.jpg` para la portada.
- *    Para las galerías, usa un array de rutas de imagen como `["/images/proyecto-1.jpg", "/images/proyecto-2.jpg"]`.
- * 2. Agrega un nuevo objeto `Project` al array `projects` abajo.
- * 3. El mismo proyecto aparecerá automáticamente tanto en la vista "Por Ubicación" como en "Por Tipo"
- *    basado en las etiquetas `location` y `type` que le asignes.
- */
+import {
+  db,
+  projectsTable,
+  projectImagesTable,
+  pool,
+} from "@workspace/db";
+import { eq } from "drizzle-orm";
 
-export type ProjectLocation = "quinta-region" | "region-metropolitana" | "argentina";
-export type ProjectType = "residencial-casa" | "residencial-departamento" | "oficinas";
-
-export type Project = {
-  id: string;
+type SeedProject = {
+  slug: string;
   title: string;
   year: number;
-  location: ProjectLocation;
-  type: ProjectType;
+  location: "quinta-region" | "region-metropolitana" | "argentina";
+  type: "residencial-casa" | "residencial-departamento" | "oficinas";
   description: string;
   cover: string;
   gallery: string[];
 };
 
-// Notas para el estudio:
-// - Las fotos provienen del archivo "2mArq" entregado por el estudio.
-// - Los `year`, `location` y descripciones marcadas con TODO requieren confirmación
-//   del estudio: cuando los confirmen, basta con editar el campo y borrar el TODO.
-// - Si más adelante se quieren separar "comerciales" e "institucionales" del tipo
-//   `oficinas`, hay que ampliar `ProjectType` y los filtros en `home.tsx`.
-
-export const projects: Project[] = [
-  // === Edificios residenciales ===
+const seedProjects: SeedProject[] = [
   {
-    id: "edificio-bella-brizza",
+    slug: "edificio-bella-brizza",
     title: "Edificio Bella Brizza",
-    year: 2024, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2024,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Edificio residencial de volumen contenido y fachada articulada en bandas horizontales. Las terrazas continuas amplían cada departamento hacia el exterior.",
@@ -48,10 +34,10 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-melinka",
+    slug: "edificio-melinka",
     title: "Edificio Melinka",
-    year: 2023, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2023,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Bloque residencial de geometría rotunda. Su fachada blanca y los retranqueos en planta alta otorgan al volumen una presencia serena dentro del tejido urbano.",
@@ -64,10 +50,10 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-foresta",
+    slug: "edificio-foresta",
     title: "Edificio Foresta",
-    year: 2023, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2023,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Edificio de mediana altura integrado a un entorno arbolado. La envolvente combina paños macizos y vidrios para enmarcar las vistas hacia el verde circundante.",
@@ -79,10 +65,10 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-lautaro",
+    slug: "edificio-lautaro",
     title: "Edificio Lautaro",
-    year: 2022, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2022,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Proyecto residencial urbano de líneas sobrias. La fachada se ordena en una grilla rigurosa que permite balcones profundos en cada nivel.",
@@ -94,10 +80,10 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-parque",
+    slug: "edificio-parque",
     title: "Edificio Parque",
-    year: 2022, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2022,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Volumen residencial pensado para abrirse a un parque adyacente. Las terrazas escalonadas asoman entre la vegetación y filtran el sol durante el día.",
@@ -108,10 +94,10 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-alessandri",
+    slug: "edificio-alessandri",
     title: "Edificio Alessandri",
-    year: 2021, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2021,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Edificio residencial de carácter urbano. Su composición de planos blancos y aberturas regulares resuelve la fachada con sobriedad y claridad geométrica.",
@@ -122,7 +108,7 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-montemar",
+    slug: "edificio-montemar",
     title: "Edificio Montemar",
     year: 2021,
     location: "quinta-region",
@@ -136,9 +122,9 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-vista-al-mar",
+    slug: "edificio-vista-al-mar",
     title: "Edificio Vista al Mar",
-    year: 2020, // TODO: confirmar año con el estudio
+    year: 2020,
     location: "quinta-region",
     type: "residencial-departamento",
     description:
@@ -147,10 +133,10 @@ export const projects: Project[] = [
     gallery: ["/images/edificio-vista-al-mar-cover.jpg"],
   },
   {
-    id: "edificio-colores",
+    slug: "edificio-colores",
     title: "Edificio Colores",
-    year: 2020, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2020,
+    location: "quinta-region",
     type: "residencial-departamento",
     description:
       "Edificio residencial donde el color asume un rol compositivo. Tonos sobrios articulan la fachada y ordenan la lectura de cada nivel.",
@@ -158,9 +144,9 @@ export const projects: Project[] = [
     gallery: ["/images/edificio-colores-cover.jpg"],
   },
   {
-    id: "edificio-concon",
+    slug: "edificio-concon",
     title: "Edificio Concón",
-    year: 2019, // TODO: confirmar año con el estudio
+    year: 2019,
     location: "quinta-region",
     type: "residencial-departamento",
     description:
@@ -169,9 +155,9 @@ export const projects: Project[] = [
     gallery: ["/images/edificio-concon-cover.jpg"],
   },
   {
-    id: "edificio-renaca",
+    slug: "edificio-renaca",
     title: "Edificio Reñaca",
-    year: 2024, // TODO: confirmar año con el estudio
+    year: 2024,
     location: "quinta-region",
     type: "residencial-departamento",
     description:
@@ -183,45 +169,43 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "edificio-6-oriente",
+    slug: "edificio-6-oriente",
     title: "Edificio 6 Oriente",
-    year: 2019, // TODO: confirmar año con el estudio
+    year: 2019,
     location: "quinta-region",
-    type: "residencial-departamento", // TODO: confirmar tipo con el estudio
+    type: "residencial-departamento",
     description:
       "Edificio en pleno tejido urbano de Viña del Mar. Volumen compacto que aprovecha la totalidad del predio y resuelve la fachada con materialidad sobria.",
     cover: "/images/edificio-6-oriente-cover.jpg",
     gallery: ["/images/edificio-6-oriente-cover.jpg"],
   },
   {
-    id: "edificio-buin",
+    slug: "edificio-buin",
     title: "Edificio Buin",
-    year: 2022, // TODO: confirmar año con el estudio
+    year: 2022,
     location: "region-metropolitana",
-    type: "residencial-departamento", // TODO: confirmar tipo con el estudio
+    type: "residencial-departamento",
     description:
       "Edificio residencial en la comuna de Buin. La envolvente combina paños macizos y aberturas calibradas para responder al asoleamiento del valle central.",
     cover: "/images/edificio-buin-cover.jpg",
     gallery: ["/images/edificio-buin-cover.jpg"],
   },
   {
-    id: "lote-c",
+    slug: "lote-c",
     title: "Lote C",
-    year: 2024, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
-    type: "residencial-departamento", // TODO: confirmar tipo con el estudio
+    year: 2024,
+    location: "quinta-region",
+    type: "residencial-departamento",
     description:
       "Proyecto residencial en desarrollo. Estudio volumétrico que define la implantación, la altura y la relación del edificio con su entorno inmediato.",
     cover: "/images/lote-c-cover.jpg",
     gallery: ["/images/lote-c-cover.jpg", "/images/lote-c-2.jpg"],
   },
-
-  // === Casas (residencial-casa) ===
   {
-    id: "casa-habitacional",
+    slug: "casa-habitacional",
     title: "Casa Habitacional",
-    year: 2022, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2022,
+    location: "quinta-region",
     type: "residencial-casa",
     description:
       "Vivienda unifamiliar de geometría serena. Los volúmenes blancos se articulan en torno a patios y terrazas que ordenan la vida doméstica.",
@@ -231,13 +215,11 @@ export const projects: Project[] = [
       "/images/casa-habitacional-2.jpg",
     ],
   },
-
-  // === Comerciales / institucionales (mapeados a "oficinas") ===
   {
-    id: "boulevar-infinito",
+    slug: "boulevar-infinito",
     title: "Boulevar Infinito",
-    year: 2023, // TODO: confirmar año con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
+    year: 2023,
+    location: "quinta-region",
     type: "oficinas",
     description:
       "Proyecto comercial concebido como un eje peatonal continuo. La cubierta y los locales se ordenan para acompañar el recorrido y favorecer el encuentro.",
@@ -249,9 +231,9 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "centro-belloto",
+    slug: "centro-belloto",
     title: "Centro Belloto",
-    year: 2021, // TODO: confirmar año con el estudio
+    year: 2021,
     location: "quinta-region",
     type: "oficinas",
     description:
@@ -263,9 +245,9 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "siete-norte",
+    slug: "siete-norte",
     title: "7 Norte",
-    year: 2020, // TODO: confirmar año con el estudio
+    year: 2020,
     location: "quinta-region",
     type: "oficinas",
     description:
@@ -278,11 +260,11 @@ export const projects: Project[] = [
     ],
   },
   {
-    id: "sanatorio",
+    slug: "sanatorio",
     title: "Sanatorio",
-    year: 2019, // TODO: confirmar año y nombre exacto con el estudio
-    location: "quinta-region", // TODO: confirmar ubicación con el estudio
-    type: "oficinas", // TODO: tipo institucional/salud — actualizar si se amplían los filtros de "tipo"
+    year: 2019,
+    location: "quinta-region",
+    type: "oficinas",
     description:
       "Proyecto institucional de carácter sanitario. Los volúmenes se ordenan para resolver circulaciones diferenciadas, control lumínico y un ingreso jerárquico.",
     cover: "/images/sanatorio-cover.jpg",
@@ -293,3 +275,55 @@ export const projects: Project[] = [
     ],
   },
 ];
+
+async function main() {
+  console.log(`Sembrando ${seedProjects.length} proyectos...`);
+  let inserted = 0;
+  let skipped = 0;
+  for (let i = 0; i < seedProjects.length; i++) {
+    const p = seedProjects[i];
+    const existing = await db
+      .select({ id: projectsTable.id })
+      .from(projectsTable)
+      .where(eq(projectsTable.slug, p.slug))
+      .limit(1);
+    if (existing.length > 0) {
+      console.log(`  [skip] ${p.slug} ya existe`);
+      skipped++;
+      continue;
+    }
+
+    const [created] = await db
+      .insert(projectsTable)
+      .values({
+        slug: p.slug,
+        title: p.title,
+        year: p.year,
+        location: p.location,
+        type: p.type,
+        description: p.description,
+        coverImagePath: p.cover,
+        sortOrder: i,
+      })
+      .returning();
+
+    if (p.gallery.length > 0) {
+      await db.insert(projectImagesTable).values(
+        p.gallery.map((src, idx) => ({
+          projectId: created.id,
+          imagePath: src,
+          sortOrder: idx,
+        })),
+      );
+    }
+    console.log(`  [ok]   ${p.slug} (${p.gallery.length} imágenes)`);
+    inserted++;
+  }
+  console.log(`Listo. Insertados=${inserted}, Omitidos=${skipped}`);
+  await pool.end();
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

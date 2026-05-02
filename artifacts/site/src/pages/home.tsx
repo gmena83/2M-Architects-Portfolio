@@ -2,11 +2,17 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useScrollPosition } from "@/hooks/use-scroll-position";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSubmitContact } from "@workspace/api-client-react";
+import { useSubmitContact, useListProjects } from "@workspace/api-client-react";
 import { ContactFormSchema, type ContactFormValues } from "@/lib/contact-schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { projects, ProjectType, ProjectLocation, Project } from "@/data/projects";
+import {
+  type Project,
+  type ProjectLocation,
+  type ProjectType,
+  getCoverUrl,
+  getGalleryUrls,
+} from "@/lib/projects";
 import { mediaGroups } from "@/data/media";
 
 import {
@@ -338,7 +344,7 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
         <img
-          src={project.cover}
+          src={getCoverUrl(project)}
           alt={project.title}
           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:grayscale-[50%]"
         />
@@ -354,7 +360,7 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
 
 function Lightbox({ project, onClose }: { project: Project, onClose: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const images = project.gallery;
+  const images = useMemo(() => getGalleryUrls(project), [project]);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = `lightbox-title-${project.id}`;
@@ -477,7 +483,7 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            src={images[currentIndex]}
+            src={images[currentIndex] ?? ""}
             alt={project.title}
             className="max-w-full max-h-full object-contain shadow-2xl"
           />
@@ -513,10 +519,14 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
 function ProjectsLocation() {
   const [filter, setFilter] = useState<LocationFilter>("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { data: projectsData, isLoading } = useListProjects({
+    query: { queryKey: ["public-projects"] },
+  });
+  const projects = useMemo(() => projectsData ?? [], [projectsData]);
 
   const filteredProjects = useMemo(
     () => (filter === "all" ? projects : projects.filter((p) => p.location === filter)),
-    [filter],
+    [filter, projects],
   );
 
   return (
@@ -546,14 +556,24 @@ function ProjectsLocation() {
         </div>
 
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          <AnimatePresence>
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} />
-            ))}
-          </AnimatePresence>
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={`skel-loc-${i}`} className="animate-pulse">
+                  <div className="aspect-[3/4] bg-muted mb-4" />
+                  <div className="h-5 w-2/3 bg-muted mb-2" />
+                  <div className="h-3 w-12 bg-muted" />
+                </div>
+              ))
+            : (
+              <AnimatePresence>
+                {filteredProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} />
+                ))}
+              </AnimatePresence>
+            )}
         </motion.div>
 
-        {filteredProjects.length === 0 && (
+        {!isLoading && filteredProjects.length === 0 && (
           <div className="py-20 text-center text-muted-foreground">
             No hay proyectos para esta ubicación.
           </div>
@@ -572,10 +592,14 @@ function ProjectsLocation() {
 function ProjectsType() {
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { data: projectsData, isLoading } = useListProjects({
+    query: { queryKey: ["public-projects"] },
+  });
+  const projects = useMemo(() => projectsData ?? [], [projectsData]);
 
   const filteredProjects = useMemo(
     () => (filter === "all" ? projects : projects.filter((p) => p.type === filter)),
-    [filter],
+    [filter, projects],
   );
 
   return (
@@ -605,14 +629,24 @@ function ProjectsType() {
         </div>
 
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          <AnimatePresence>
-            {filteredProjects.map((project) => (
-              <ProjectCard key={`type-${project.id}`} project={project} onClick={() => setSelectedProject(project)} />
-            ))}
-          </AnimatePresence>
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={`skel-type-${i}`} className="animate-pulse">
+                  <div className="aspect-[3/4] bg-muted mb-4" />
+                  <div className="h-5 w-2/3 bg-muted mb-2" />
+                  <div className="h-3 w-12 bg-muted" />
+                </div>
+              ))
+            : (
+              <AnimatePresence>
+                {filteredProjects.map((project) => (
+                  <ProjectCard key={`type-${project.id}`} project={project} onClick={() => setSelectedProject(project)} />
+                ))}
+              </AnimatePresence>
+            )}
         </motion.div>
 
-        {filteredProjects.length === 0 && (
+        {!isLoading && filteredProjects.length === 0 && (
           <div className="py-20 text-center text-muted-foreground">
             No hay proyectos para este tipo.
           </div>
