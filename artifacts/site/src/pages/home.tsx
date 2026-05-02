@@ -7,6 +7,7 @@ import { ContactFormSchema, type ContactFormValues } from "@/lib/contact-schema"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { projects, ProjectType, ProjectLocation, Project } from "@/data/projects";
+import { mediaGroups } from "@/data/media";
 
 import {
   Form,
@@ -19,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 // --- Types & static config ---
 
@@ -28,6 +29,7 @@ type SectionId =
   | "estudio"
   | "proyectos-ubicacion"
   | "proyectos-tipo"
+  | "media"
   | "contacto";
 
 type NavLink = { id: Exclude<SectionId, "hero">; label: string };
@@ -36,6 +38,7 @@ const NAV_LINKS: readonly NavLink[] = [
   { id: "estudio", label: "Estudio" },
   { id: "proyectos-ubicacion", label: "Ubicación" },
   { id: "proyectos-tipo", label: "Tipo" },
+  { id: "media", label: "Media" },
   { id: "contacto", label: "Contacto" },
 ] as const;
 
@@ -44,6 +47,7 @@ const SECTION_IDS: readonly SectionId[] = [
   "estudio",
   "proyectos-ubicacion",
   "proyectos-tipo",
+  "media",
   "contacto",
 ] as const;
 
@@ -488,6 +492,103 @@ function ProjectsType() {
   );
 }
 
+function Media() {
+  return (
+    <section id="media" className="py-32 px-6 md:px-12 bg-background border-t border-border">
+      <div className="container mx-auto max-w-5xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+        >
+          <h2 className="text-3xl md:text-5xl font-display font-light mb-6 border-b border-border pb-8">
+            Media
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mb-16 leading-relaxed">
+            Publicaciones académicas, prensa gremial, registros oficiales y directorios profesionales que respaldan la trayectoria del estudio y de sus socios fundadores.
+          </p>
+
+          <div className="space-y-20">
+            {mediaGroups.map((group) => (
+              <motion.div
+                key={group.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.6 }}
+              >
+                <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground mb-8 border-b border-border/60 pb-3">
+                  {group.title}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                  {group.items.map((item, idx) => (
+                    <div key={`${group.id}-${idx}`} className="flex flex-col">
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="group inline-flex items-start gap-2 text-foreground hover:text-muted-foreground transition-colors"
+                        >
+                          <h4 className="text-base md:text-lg font-display leading-snug">
+                            {item.title}
+                          </h4>
+                          <ExternalLink
+                            size={14}
+                            strokeWidth={1.5}
+                            className="mt-1.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                          />
+                        </a>
+                      ) : (
+                        <h4 className="text-base md:text-lg font-display leading-snug text-foreground">
+                          {item.title}
+                        </h4>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                        {item.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground/80 mt-3 font-light">
+                        {item.source}
+                        {item.year ? ` · ${item.year}` : ""}
+                      </p>
+                      {item.links && item.links.length > 0 && (
+                        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                          {item.links.map((link) => (
+                            <li key={link.url}>
+                              <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="group inline-flex items-center gap-1.5 text-xs text-foreground hover:text-muted-foreground transition-colors border-b border-border/60 hover:border-muted-foreground pb-0.5"
+                              >
+                                {link.label}
+                                <ExternalLink
+                                  size={11}
+                                  strokeWidth={1.5}
+                                  className="opacity-60 group-hover:opacity-100 transition-opacity"
+                                />
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <p className="mt-20 text-xs text-muted-foreground font-light leading-relaxed border-t border-border pt-8">
+            Repositorio compilado en mayo de 2026. Fuentes verificadas mediante búsqueda web multifuente.
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 function Contact() {
   // ContactFormSchema mirrors the generated API contract (same constraints,
   // imported from @workspace/api-zod) but adds Spanish error messages.
@@ -665,6 +766,7 @@ export default function Page() {
         <Studio />
         <ProjectsLocation />
         <ProjectsType />
+        <Media />
         <Contact />
       </main>
       <Footer />
