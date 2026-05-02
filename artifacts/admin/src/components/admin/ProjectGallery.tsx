@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ProjectImage } from "@workspace/api-client-react";
 import { useUpload } from "@workspace/object-storage-web";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { resolveImageUrl } from "@/lib/image-utils";
 import { Trash2, GripVertical, Image as ImageIcon, Star, UploadCloud, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -221,16 +222,4 @@ export function ProjectGallery({ initialImages, initialCover, onImagesChange, on
   );
 }
 
-// Dummy input component specifically for this file
-function Input({ className, type, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      type={type}
-      className={cn(
-        "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+// (Input is imported from "@/components/ui/input")

@@ -107,14 +107,26 @@ export default function ProjectEditPage({
   useEffect(() => {
     if (project && mode === "edit" && !initRef.current) {
       initRef.current = true;
-      form.reset({
+      const parsed = formSchema.safeParse({
         title: project.title,
         slug: project.slug,
         year: project.year,
-        location: project.location as any,
-        type: project.type as any,
+        location: project.location,
+        type: project.type,
         description: project.description || "",
       });
+      if (parsed.success) {
+        form.reset(parsed.data);
+      } else {
+        form.reset({
+          title: project.title,
+          slug: project.slug,
+          year: project.year,
+          location: undefined,
+          type: undefined,
+          description: project.description || "",
+        });
+      }
       setLocalCover(project.coverImagePath);
       setLocalImages(project.images?.map(img => ({ imagePath: img.imagePath, sortOrder: img.sortOrder })) || []);
     }

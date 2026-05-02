@@ -20,6 +20,15 @@ const objectStorageService = new ObjectStorageService();
  *
  * Protected: only admins can mint upload URLs to prevent storage abuse.
  */
+const ALLOWED_UPLOAD_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MiB
+
 router.post("/storage/uploads/request-url", requireAuth, async (req: Request, res: Response) => {
   const parsed = RequestUploadUrlBody.safeParse(req.body);
   if (!parsed.success) {
@@ -27,9 +36,22 @@ router.post("/storage/uploads/request-url", requireAuth, async (req: Request, re
     return;
   }
 
-  try {
-    const { name, size, contentType } = parsed.data;
+  const { name, size, contentType } = parsed.data;
 
+  if (!ALLOWED_UPLOAD_MIME.has(contentType.toLowerCase())) {
+    res.status(415).json({
+      error: `Tipo de archivo no soportado: ${contentType}. Usa JPG, PNG, WEBP, GIF o AVIF.`,
+    });
+    return;
+  }
+  if (size > MAX_UPLOAD_BYTES) {
+    res.status(413).json({
+      error: `Archivo demasiado grande (${size} bytes). Máximo: ${MAX_UPLOAD_BYTES} bytes.`,
+    });
+    return;
+  }
+
+  try {
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
