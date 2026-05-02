@@ -249,3 +249,9 @@
     inset: -1px;
   }
 }
+/* Hero video iframe + reduced-motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none;
+  }
+}

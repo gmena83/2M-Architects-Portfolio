@@ -224,7 +224,15 @@ function Hero() {
         <img
           src="/images/hero.png"
           alt="2M Arquitectos Arquitectura"
-          className="w-full h-full object-cover"
+          className="hero-fallback w-full h-full object-cover"
+        />
+        <iframe
+          src="/hero-video/?embed=1"
+          title="Planos arquitectónicos en desarrollo"
+          aria-hidden="true"
+          tabIndex={-1}
+          loading="eager"
+          className="hero-video absolute inset-0 w-full h-full border-0 pointer-events-none"
         />
       </div>
 

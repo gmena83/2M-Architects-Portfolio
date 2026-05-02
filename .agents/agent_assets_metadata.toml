@@ -60,3 +60,9 @@ id = "CeCGPkYLP05XehHgSyWiS"
 uri = "file://artifacts/site/public/images/casa-mantagua-cover.png"
 type = "image"
 title = "Casa Mantagua cover"
+
+[[generated]]
+id = "mwKAjlTQKMcFLX3PdJ59Z"
+uri = "file://artifacts/hero-video/public/images/arch-abstract.png"
+type = "image"
+title = "Abstract architectural lines"
