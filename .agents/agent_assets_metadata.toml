@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "FdPzC0jwT0KuoO5Xog322"
+uri = "file://artifacts/site/public/images/hero.png"
+type = "image"
+title = "Hero concrete architecture"
+
+[[generated]]
+id = "vIzM6UW3TRMWVPqn00N_b"
+uri = "file://artifacts/site/public/images/casa-renaca-cover.png"
+type = "image"
+title = "Casa Reñaca cover"
+
+[[generated]]
+id = "Ts02OfrtTskYszfWf6-Ry"
+uri = "file://artifacts/site/public/images/mirador-concon-cover.png"
+type = "image"
+title = "Mirador Concón cover"
+
+[[generated]]
+id = "n0FKTwaLNG7incKjWwTkI"
+uri = "file://artifacts/site/public/images/oficinas-las-condes-cover.png"
+type = "image"
+title = "Oficinas Las Condes cover"
+
+[[generated]]
+id = "9Trxr9dbV5x-iSiJ2x-Ah"
+uri = "file://artifacts/site/public/images/casa-patagonia-cover.png"
+type = "image"
+title = "Casa Patagonia cover"
+
+[[generated]]
+id = "vmHJ20Kc-FyRtHMh3zKnA"
+uri = "file://artifacts/site/public/images/edificio-vina-cover.png"
+type = "image"
+title = "Edificio Viña cover"
+
+[[generated]]
+id = "cEkJWmQDrEx-sDrDbc5rn"
+uri = "file://artifacts/site/public/images/casa-zapallar-cover.png"
+type = "image"
+title = "Casa Zapallar cover"
+
+[[generated]]
+id = "C5dTQLU3R7C6w7bQm62VA"
+uri = "file://artifacts/site/public/images/oficinas-providencia-cover.png"
+type = "image"
+title = "Oficinas Providencia cover"
+
+[[generated]]
+id = "QlavIDObOdgFkVbDkrrrD"
+uri = "file://artifacts/site/public/images/refugio-mendoza-cover.png"
+type = "image"
+title = "Refugio Mendoza cover"
+
+[[generated]]
+id = "CeCGPkYLP05XehHgSyWiS"
+uri = "file://artifacts/site/public/images/casa-mantagua-cover.png"
+type = "image"
+title = "Casa Mantagua cover"
