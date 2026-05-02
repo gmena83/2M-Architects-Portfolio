@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, ExternalLink, Instagram, Linkedin } from "lucide-react";
 
 // --- Types & static config ---
 
@@ -786,13 +786,47 @@ function Contact() {
               </a>
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground mb-1">Sede</p>
-              <p className="text-muted-foreground font-light">
-                Viña del Mar,<br />
-                Región de Valparaíso,<br />
+              <p className="text-sm font-medium text-foreground mb-1">Oficina</p>
+              <address className="not-italic text-muted-foreground font-light">
+                Avenida Libertad 1348, oficina 502<br />
+                Viña del Mar, Región de Valparaíso<br />
                 Chile
-              </p>
+              </address>
             </div>
+            <div>
+              <p className="text-sm font-medium text-foreground mb-3">Redes</p>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://www.instagram.com/2marquitectos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram de 2M Arquitectos"
+                  className="inline-flex items-center justify-center w-10 h-10 border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                >
+                  <Instagram className="w-4 h-4" strokeWidth={1.5} />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/2m-arquitectos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn de 2M Arquitectos"
+                  className="inline-flex items-center justify-center w-10 h-10 border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                >
+                  <Linkedin className="w-4 h-4" strokeWidth={1.5} />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 md:mt-12 border border-border overflow-hidden">
+            <iframe
+              title="Mapa de la oficina de 2M Arquitectos en Viña del Mar"
+              src="https://maps.google.com/maps?q=Avenida%20Libertad%201348%2C%20Vi%C3%B1a%20del%20Mar%2C%20Chile&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-64 md:h-72 grayscale contrast-95 block"
+              style={{ border: 0 }}
+            />
           </div>
         </div>
 
