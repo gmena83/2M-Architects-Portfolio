@@ -249,7 +249,7 @@
     inset: -1px;
   }
 }
-/* Hero video iframe + reduced-motion fallback */
+/* Hero <video> + reduced-motion fallback (poster image stays visible) */
 @media (prefers-reduced-motion: reduce) {
   .hero-video {
     display: none;
