@@ -1,3 +1,5 @@
+// Resend integration via Replit Connectors. Do NOT cache the client — tokens expire.
+// Reference: Replit Resend integration blueprint.
 import { Resend } from "resend";
 import { logger } from "./logger";
 
@@ -9,6 +11,56 @@ export interface ContactEmailPayload {
 }
 
 const TO_ADDRESS = "contacto@2marquitectos.cl";
+
+interface ResendConnectionSettings {
+  api_key?: string;
+  from_email?: string;
+}
+
+interface ResendConnection {
+  settings: ResendConnectionSettings;
+}
+
+async function getResendCredentials(): Promise<{
+  apiKey: string;
+  fromEmail?: string;
+}> {
+  const hostname = process.env["REPLIT_CONNECTORS_HOSTNAME"];
+  const replIdentity = process.env["REPL_IDENTITY"];
+  const webReplRenewal = process.env["WEB_REPL_RENEWAL"];
+
+  const xReplitToken = replIdentity
+    ? `repl ${replIdentity}`
+    : webReplRenewal
+      ? `depl ${webReplRenewal}`
+      : null;
+
+  if (!hostname || !xReplitToken) {
+    throw new Error("Replit connector credentials not available");
+  }
+
+  const response = await fetch(
+    `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=resend`,
+    {
+      headers: {
+        Accept: "application/json",
+        "X-Replit-Token": xReplitToken,
+      },
+    },
+  );
+
+  const data = (await response.json()) as { items?: ResendConnection[] };
+  const connection = data.items?.[0];
+
+  if (!connection || !connection.settings.api_key) {
+    throw new Error("Resend not connected");
+  }
+
+  return {
+    apiKey: connection.settings.api_key,
+    fromEmail: connection.settings.from_email,
+  };
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -22,17 +74,11 @@ function escapeHtml(value: string): string {
 export async function sendContactEmail(
   payload: ContactEmailPayload,
 ): Promise<void> {
-  const apiKey = process.env["RESEND_API_KEY"];
-  if (!apiKey) {
-    throw new Error(
-      "RESEND_API_KEY is not configured. Add the Resend integration in Replit.",
-    );
-  }
+  const { apiKey, fromEmail } = await getResendCredentials();
+  const resend = new Resend(apiKey);
 
   const fromAddress =
-    process.env["CONTACT_FROM_ADDRESS"] ?? "2M Arquitectos <onboarding@resend.dev>";
-
-  const resend = new Resend(apiKey);
+    fromEmail ?? "2M Arquitectos <onboarding@resend.dev>";
 
   const subject = `Nuevo mensaje desde el sitio · ${payload.nombre}`;
 
