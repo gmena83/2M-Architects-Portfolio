@@ -1,5 +1,3 @@
-// Placeholder loading scene - replace with your video content
-
 import { motion } from 'framer-motion';
 
 export function ReplitLoadingScene() {

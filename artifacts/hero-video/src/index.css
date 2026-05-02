@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* REPLACE THESE -- define your own palette and fonts for each video */
 :root {
   --color-primary: #000000;
   --color-secondary: #6B7280;
