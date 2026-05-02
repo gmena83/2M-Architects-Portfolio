@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "wouter";
 import { useScrollPosition } from "@/hooks/use-scroll-position";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +12,6 @@ import {
   type ProjectLocation,
   type ProjectType,
   getCoverUrl,
-  getGalleryUrls,
 } from "@/lib/projects";
 import { mediaGroups } from "@/data/media";
 
@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronLeft, ChevronRight, ExternalLink, Instagram, Linkedin } from "lucide-react";
+import { Menu, X, ExternalLink, Instagram, Linkedin } from "lucide-react";
 
 // --- Types & static config ---
 
@@ -315,7 +315,7 @@ function Studio() {
   );
 }
 
-function ProjectCard({ project, onClick }: { project: Project, onClick: () => void }) {
+function ProjectCard({ project }: { project: Project }) {
   return (
     <motion.div
       layout
@@ -323,202 +323,31 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.4 }}
-      className="group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      role="button"
-      tabIndex={0}
-      aria-label={`Abrir galería del proyecto ${project.title}`}
-      onClick={(e) => {
-        // Ensure the card receives focus on click so it can be restored
-        // when the lightbox closes (some browsers don't focus non-button
-        // elements on click).
-        (e.currentTarget as HTMLElement).focus();
-        onClick();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          (e.currentTarget as HTMLElement).focus();
-          onClick();
-        }
-      }}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
-        <img
-          src={getCoverUrl(project)}
-          alt={project.title}
-          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:grayscale-[50%]"
-        />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-      </div>
-      <div>
-        <h4 className="text-lg font-display tracking-tight text-foreground">{project.title}</h4>
-        <p className="text-sm text-muted-foreground mt-1">{project.year}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-function Lightbox({ project, onClose }: { project: Project, onClose: () => void }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const images = useMemo(() => getGalleryUrls(project), [project]);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const titleId = `lightbox-title-${project.id}`;
-
-  useEffect(() => {
-    const FOCUSABLE_SELECTOR =
-      'a[href], area[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, object, embed, [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
-
-    const getFocusable = (): HTMLElement[] => {
-      const root = dialogRef.current;
-      if (!root) return [];
-      return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-        (el) => !el.hasAttribute('disabled') && el.offsetParent !== null,
-      );
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        setCurrentIndex((prev) => (prev + 1) % images.length);
-        return;
-      }
-      if (e.key === 'ArrowLeft') {
-        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-        return;
-      }
-      if (e.key === 'Tab') {
-        const focusable = getFocusable();
-        if (focusable.length === 0) {
-          e.preventDefault();
-          dialogRef.current?.focus();
-          return;
-        }
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        const active = document.activeElement as HTMLElement | null;
-        const dialog = dialogRef.current;
-        const activeInside = !!(active && dialog && dialog.contains(active));
-
-        if (e.shiftKey) {
-          if (!activeInside || active === first) {
-            e.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (!activeInside || active === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [images.length, onClose]);
-
-  // Lock background scroll and move focus into the dialog while open;
-  // restore both on close.
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus?.();
-    };
-  }, []);
-
-  const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.18 }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      ref={dialogRef}
-      tabIndex={-1}
-      className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex flex-col"
-    >
-      <button
-        ref={closeButtonRef}
-        onClick={onClose}
-        className="absolute top-4 right-4 md:top-6 md:right-6 text-foreground/70 hover:text-foreground z-50 p-2"
-        aria-label="Cerrar"
+      <Link
+        href={`/proyectos/${project.slug}`}
+        aria-label={`Ver el proyecto ${project.title}`}
+        className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <X size={28} strokeWidth={1} className="md:hidden" />
-        <X size={32} strokeWidth={1} className="hidden md:block" />
-      </button>
-
-      <button
-        onClick={prevImage}
-        className="hidden md:flex items-center justify-center absolute left-6 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground z-50 p-4"
-        aria-label="Imagen anterior"
-      >
-        <ChevronLeft size={48} strokeWidth={1} />
-      </button>
-
-      <button
-        onClick={nextImage}
-        className="hidden md:flex items-center justify-center absolute right-6 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground z-50 p-4"
-        aria-label="Imagen siguiente"
-      >
-        <ChevronRight size={48} strokeWidth={1} />
-      </button>
-
-      <div className="flex-1 min-h-0 flex items-center justify-center px-4 pt-16 pb-4 md:px-24 md:pt-20 md:pb-20">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            src={images[currentIndex] ?? ""}
+        <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
+          <img
+            src={getCoverUrl(project)}
             alt={project.title}
-            className="max-w-full max-h-full object-contain shadow-2xl"
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:grayscale-[50%]"
           />
-        </AnimatePresence>
-      </div>
-
-      <div className="shrink-0 px-4 md:px-12 pb-6 md:pb-8 pt-2 flex items-center gap-4 text-sm font-light text-muted-foreground">
-        <button
-          onClick={prevImage}
-          className="md:hidden flex items-center justify-center p-2 -ml-2 text-foreground/70 hover:text-foreground"
-          aria-label="Imagen anterior"
-        >
-          <ChevronLeft size={28} strokeWidth={1} />
-        </button>
-        <span id={titleId} className="font-display text-foreground truncate flex-1 text-center md:text-left">
-          {project.title}
-        </span>
-        <span className="tabular-nums shrink-0">
-          {currentIndex + 1} / {images.length}
-        </span>
-        <button
-          onClick={nextImage}
-          className="md:hidden flex items-center justify-center p-2 -mr-2 text-foreground/70 hover:text-foreground"
-          aria-label="Imagen siguiente"
-        >
-          <ChevronRight size={28} strokeWidth={1} />
-        </button>
-      </div>
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
+        </div>
+        <div>
+          <h4 className="text-lg font-display tracking-tight text-foreground">{project.title}</h4>
+          <p className="text-sm text-muted-foreground mt-1">{project.year}</p>
+        </div>
+      </Link>
     </motion.div>
   );
 }
 
 function ProjectsLocation() {
   const [filter, setFilter] = useState<LocationFilter>("all");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { data: projectsData, isLoading } = useListProjects({
     query: { queryKey: ["public-projects"] },
   });
@@ -567,7 +396,7 @@ function ProjectsLocation() {
             : (
               <AnimatePresence>
                 {filteredProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} />
+                  <ProjectCard key={project.id} project={project} />
                 ))}
               </AnimatePresence>
             )}
@@ -580,18 +409,12 @@ function ProjectsLocation() {
         )}
       </div>
 
-      <AnimatePresence>
-        {selectedProject && (
-          <Lightbox project={selectedProject} onClose={() => setSelectedProject(null)} />
-        )}
-      </AnimatePresence>
     </section>
   );
 }
 
 function ProjectsType() {
   const [filter, setFilter] = useState<TypeFilter>("all");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { data: projectsData, isLoading } = useListProjects({
     query: { queryKey: ["public-projects"] },
   });
@@ -640,7 +463,7 @@ function ProjectsType() {
             : (
               <AnimatePresence>
                 {filteredProjects.map((project) => (
-                  <ProjectCard key={`type-${project.id}`} project={project} onClick={() => setSelectedProject(project)} />
+                  <ProjectCard key={`type-${project.id}`} project={project} />
                 ))}
               </AnimatePresence>
             )}
@@ -653,11 +476,6 @@ function ProjectsType() {
         )}
       </div>
 
-      <AnimatePresence>
-        {selectedProject && (
-          <Lightbox project={selectedProject} onClose={() => setSelectedProject(null)} />
-        )}
-      </AnimatePresence>
     </section>
   );
 }
