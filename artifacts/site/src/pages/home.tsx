@@ -3,8 +3,7 @@ import { useScrollPosition } from "@/hooks/use-scroll-position";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubmitContact } from "@workspace/api-client-react";
-import { SubmitContactBody } from "@workspace/api-zod";
-import type { z } from "zod";
+import { ContactFormSchema, type ContactFormValues } from "@/lib/contact-schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { projects, ProjectType, ProjectLocation, Project } from "@/data/projects";
@@ -489,13 +488,11 @@ function ProjectsType() {
   );
 }
 
-// Validation schema is reused from the generated API contract so the form,
-// the network layer, and the server share a single source of truth.
-type ContactFormValues = z.infer<typeof SubmitContactBody>;
-
 function Contact() {
+  // ContactFormSchema mirrors the generated API contract (same constraints,
+  // imported from @workspace/api-zod) but adds Spanish error messages.
   const form = useForm<ContactFormValues>({
-    resolver: zodResolver(SubmitContactBody),
+    resolver: zodResolver(ContactFormSchema),
     defaultValues: { nombre: "", email: "", telefono: "", mensaje: "" },
   });
 
