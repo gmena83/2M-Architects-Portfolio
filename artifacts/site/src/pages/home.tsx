@@ -455,7 +455,7 @@ function ProjectsLocation() {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-full transition-colors border",
+                  "inline-flex items-center min-h-10 px-4 text-sm font-medium rounded-full transition-colors border",
                   filter === f.id
                     ? "bg-foreground text-background border-foreground"
                     : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
@@ -514,7 +514,7 @@ function ProjectsType() {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-full transition-colors border",
+                  "inline-flex items-center min-h-10 px-4 text-sm font-medium rounded-full transition-colors border",
                   filter === f.id
                     ? "bg-foreground text-background border-foreground"
                     : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
@@ -794,7 +794,8 @@ function Contact() {
 
               <Button
                 type="submit"
-                className="w-full md:w-auto px-8 bg-foreground text-background hover:bg-foreground/90 font-medium"
+                size="lg"
+                className="w-full md:w-auto bg-foreground text-background hover:bg-foreground/90 font-medium"
                 disabled={contactMutation.isPending}
               >
                 {contactMutation.isPending ? "Enviando..." : "Enviar Mensaje"}
