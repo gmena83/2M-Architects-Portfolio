@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useScrollPosition } from "@/hooks/use-scroll-position";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubmitContact } from "@workspace/api-client-react";
-import { z } from "zod";
+import { SubmitContactBody } from "@workspace/api-zod";
+import type { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { projects, ProjectType, ProjectLocation, Project } from "@/data/projects";
@@ -21,14 +22,100 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 
+// --- Types & static config ---
+
+type SectionId =
+  | "hero"
+  | "estudio"
+  | "proyectos-ubicacion"
+  | "proyectos-tipo"
+  | "contacto";
+
+type NavLink = { id: Exclude<SectionId, "hero">; label: string };
+
+const NAV_LINKS: readonly NavLink[] = [
+  { id: "estudio", label: "Estudio" },
+  { id: "proyectos-ubicacion", label: "Ubicación" },
+  { id: "proyectos-tipo", label: "Tipo" },
+  { id: "contacto", label: "Contacto" },
+] as const;
+
+const SECTION_IDS: readonly SectionId[] = [
+  "hero",
+  "estudio",
+  "proyectos-ubicacion",
+  "proyectos-tipo",
+  "contacto",
+] as const;
+
+type LocationFilter = ProjectLocation | "all";
+type TypeFilter = ProjectType | "all";
+
+const LOCATION_FILTERS: readonly { id: LocationFilter; label: string }[] = [
+  { id: "all", label: "Todos" },
+  { id: "quinta-region", label: "Quinta Región" },
+  { id: "region-metropolitana", label: "Región Metropolitana" },
+  { id: "argentina", label: "Argentina" },
+] as const;
+
+const TYPE_FILTERS: readonly { id: TypeFilter; label: string }[] = [
+  { id: "all", label: "Todos" },
+  { id: "residencial-casa", label: "Residencial Casa" },
+  { id: "residencial-departamento", label: "Residencial Departamento" },
+  { id: "oficinas", label: "Oficinas" },
+] as const;
+
+// --- Hooks ---
+
+function useActiveSection(sectionIds: readonly SectionId[]): SectionId {
+  const [active, setActive] = useState<SectionId>(sectionIds[0]);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    const visible = new Map<SectionId, number>();
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            visible.set(id, entry.isIntersecting ? entry.intersectionRatio : 0);
+          }
+          let bestId: SectionId = sectionIds[0];
+          let bestRatio = -1;
+          for (const candidate of sectionIds) {
+            const ratio = visible.get(candidate) ?? 0;
+            if (ratio > bestRatio) {
+              bestRatio = ratio;
+              bestId = candidate;
+            }
+          }
+          if (bestRatio > 0) {
+            setActive(bestId);
+          }
+        },
+        { threshold: [0, 0.25, 0.5, 0.75, 1], rootMargin: "-30% 0px -50% 0px" },
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, [sectionIds]);
+
+  return active;
+}
+
 // --- Components ---
 
 function Navbar() {
   const scrollY = useScrollPosition();
   const isScrolled = scrollY > 50;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const activeSection = useActiveSection(SECTION_IDS);
 
-  const scrollTo = (id: string) => {
+  const scrollTo = (id: SectionId) => {
     setMobileMenuOpen(false);
     const el = document.getElementById(id);
     if (el) {
@@ -44,8 +131,8 @@ function Navbar() {
       )}
     >
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-        <button 
-          onClick={() => scrollTo("hero")} 
+        <button
+          onClick={() => scrollTo("hero")}
           className="text-xl md:text-2xl font-display font-medium tracking-tight text-foreground"
         >
           2M <span className="text-muted-foreground font-light">Arquitectos</span>
@@ -53,15 +140,36 @@ function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => scrollTo("estudio")} className="text-sm font-medium hover:text-muted-foreground transition-colors">Estudio</button>
-          <button onClick={() => scrollTo("proyectos-ubicacion")} className="text-sm font-medium hover:text-muted-foreground transition-colors">Proyectos</button>
-          <button onClick={() => scrollTo("contacto")} className="text-sm font-medium hover:text-muted-foreground transition-colors">Contacto</button>
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.id;
+            return (
+              <button
+                key={link.id}
+                onClick={() => scrollTo(link.id)}
+                aria-current={isActive ? "true" : undefined}
+                className={cn(
+                  "relative text-sm font-medium transition-colors",
+                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {link.label}
+                {isActive && (
+                  <motion.span
+                    layoutId="nav-active-underline"
+                    className="absolute -bottom-1 left-0 right-0 h-px bg-foreground"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Mobile Nav Toggle */}
-        <button 
+        <button
           className="md:hidden text-foreground"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -70,15 +178,28 @@ function Navbar() {
       {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 right-0 bg-background border-b border-border shadow-lg py-4 px-6 md:hidden flex flex-col gap-4"
           >
-            <button onClick={() => scrollTo("estudio")} className="text-left text-lg font-medium py-2 border-b border-border/50">Estudio</button>
-            <button onClick={() => scrollTo("proyectos-ubicacion")} className="text-left text-lg font-medium py-2 border-b border-border/50">Proyectos</button>
-            <button onClick={() => scrollTo("contacto")} className="text-left text-lg font-medium py-2">Contacto</button>
+            {NAV_LINKS.map((link) => {
+              const isActive = activeSection === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => scrollTo(link.id)}
+                  aria-current={isActive ? "true" : undefined}
+                  className={cn(
+                    "text-left text-lg font-medium py-2 border-b border-border/50 transition-colors",
+                    isActive ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
@@ -91,15 +212,15 @@ function Hero() {
     <section id="hero" className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/40 z-10" />
-        <img 
-          src="/images/hero.png" 
-          alt="2M Arquitectos Arquitectura" 
+        <img
+          src="/images/hero.png"
+          alt="2M Arquitectos Arquitectura"
           className="w-full h-full object-cover"
         />
       </div>
-      
+
       <div className="relative z-10 text-center px-6 mt-20">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -107,7 +228,7 @@ function Hero() {
         >
           2M Arquitectos
         </motion.h1>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -116,7 +237,7 @@ function Hero() {
           Forma, materia y luz en el Pacífico Sur.
         </motion.p>
       </div>
-      
+
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 animate-bounce">
         <div className="w-[1px] h-16 bg-white/30" />
       </div>
@@ -137,7 +258,7 @@ function Studio() {
           <h2 className="text-3xl md:text-5xl font-display font-light mb-16 border-b border-border pb-8">
             Estudio
           </h2>
-          
+
           <div className="grid md:grid-cols-2 gap-16">
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <h3 className="text-xl font-display text-foreground">Carlos Mena Manía</h3>
@@ -148,7 +269,7 @@ function Studio() {
                 En 1968, publicó en la Revista AUCA el artículo "Valparaíso Metropolitano", donde entregó su diagnóstico técnico de la ciudad metropolitana y de los desafíos del plan. Este texto es considerado un documento de referencia para la historia del urbanismo regional chileno.
               </p>
             </div>
-            
+
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <h3 className="text-xl font-display text-foreground">Gonzalo Mena Améstiga</h3>
               <p>
@@ -167,7 +288,7 @@ function Studio() {
 
 function ProjectCard({ project, onClick }: { project: Project, onClick: () => void }) {
   return (
-    <motion.div 
+    <motion.div
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -177,8 +298,8 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
       onClick={onClick}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
-        <img 
-          src={project.cover} 
+        <img
+          src={project.cover}
           alt={project.title}
           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:grayscale-[50%]"
         />
@@ -199,32 +320,32 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight') nextImage();
-      if (e.key === 'ArrowLeft') prevImage();
+      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev + 1) % images.length);
+      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex]);
+  }, [images.length, onClose]);
 
   const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex items-center justify-center"
     >
-      <button onClick={onClose} className="absolute top-6 right-6 text-foreground/70 hover:text-foreground z-50 p-2">
+      <button onClick={onClose} className="absolute top-6 right-6 text-foreground/70 hover:text-foreground z-50 p-2" aria-label="Cerrar">
         <X size={32} strokeWidth={1} />
       </button>
 
-      <button onClick={prevImage} className="absolute left-6 text-foreground/50 hover:text-foreground z-50 p-4">
+      <button onClick={prevImage} className="absolute left-6 text-foreground/50 hover:text-foreground z-50 p-4" aria-label="Imagen anterior">
         <ChevronLeft size={48} strokeWidth={1} />
       </button>
 
-      <button onClick={nextImage} className="absolute right-6 text-foreground/50 hover:text-foreground z-50 p-4">
+      <button onClick={nextImage} className="absolute right-6 text-foreground/50 hover:text-foreground z-50 p-4" aria-label="Imagen siguiente">
         <ChevronRight size={48} strokeWidth={1} />
       </button>
 
@@ -240,7 +361,7 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
             className="max-w-full max-h-[80vh] object-contain shadow-2xl"
           />
         </AnimatePresence>
-        
+
         <div className="absolute bottom-[-40px] left-20 right-20 flex justify-between items-center text-sm font-light text-muted-foreground">
           <span className="font-display text-foreground">{project.title}</span>
           <span>{currentIndex + 1} / {images.length}</span>
@@ -251,12 +372,13 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
 }
 
 function ProjectsLocation() {
-  const [filter, setFilter] = useState<ProjectLocation | "all">("all");
+  const [filter, setFilter] = useState<LocationFilter>("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const filteredProjects = filter === "all" 
-    ? projects 
-    : projects.filter(p => p.location === filter);
+  const filteredProjects = useMemo(
+    () => (filter === "all" ? projects : projects.filter((p) => p.location === filter)),
+    [filter],
+  );
 
   return (
     <section id="proyectos-ubicacion" className="py-24 px-6 md:px-12 bg-background border-t border-border">
@@ -265,21 +387,16 @@ function ProjectsLocation() {
           <h2 className="text-3xl md:text-5xl font-display font-light">
             Proyectos <span className="text-muted-foreground">· Por Ubicación</span>
           </h2>
-          
+
           <div className="flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "Todos" },
-              { id: "quinta-region", label: "Quinta Región" },
-              { id: "region-metropolitana", label: "Región Metropolitana" },
-              { id: "argentina", label: "Argentina" }
-            ].map(f => (
+            {LOCATION_FILTERS.map((f) => (
               <button
                 key={f.id}
-                onClick={() => setFilter(f.id as any)}
+                onClick={() => setFilter(f.id)}
                 className={cn(
                   "px-4 py-1.5 text-sm font-medium rounded-full transition-colors border",
-                  filter === f.id 
-                    ? "bg-foreground text-background border-foreground" 
+                  filter === f.id
+                    ? "bg-foreground text-background border-foreground"
                     : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
                 )}
               >
@@ -314,12 +431,13 @@ function ProjectsLocation() {
 }
 
 function ProjectsType() {
-  const [filter, setFilter] = useState<ProjectType | "all">("all");
+  const [filter, setFilter] = useState<TypeFilter>("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const filteredProjects = filter === "all" 
-    ? projects 
-    : projects.filter(p => p.type === filter);
+  const filteredProjects = useMemo(
+    () => (filter === "all" ? projects : projects.filter((p) => p.type === filter)),
+    [filter],
+  );
 
   return (
     <section id="proyectos-tipo" className="py-24 px-6 md:px-12 bg-background border-t border-border">
@@ -328,21 +446,16 @@ function ProjectsType() {
           <h2 className="text-3xl md:text-5xl font-display font-light">
             Proyectos <span className="text-muted-foreground">· Por Tipo</span>
           </h2>
-          
+
           <div className="flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "Todos" },
-              { id: "residencial-casa", label: "Residencial Casa" },
-              { id: "residencial-departamento", label: "Residencial Departamento" },
-              { id: "oficinas", label: "Oficinas" }
-            ].map(f => (
+            {TYPE_FILTERS.map((f) => (
               <button
                 key={f.id}
-                onClick={() => setFilter(f.id as any)}
+                onClick={() => setFilter(f.id)}
                 className={cn(
                   "px-4 py-1.5 text-sm font-medium rounded-full transition-colors border",
-                  filter === f.id 
-                    ? "bg-foreground text-background border-foreground" 
+                  filter === f.id
+                    ? "bg-foreground text-background border-foreground"
                     : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
                 )}
               >
@@ -376,16 +489,13 @@ function ProjectsType() {
   );
 }
 
-const contactSchema = z.object({
-  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(120),
-  email: z.string().email("Correo electrónico inválido").max(200),
-  telefono: z.string().max(40).optional(),
-  mensaje: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(4000),
-});
+// Validation schema is reused from the generated API contract so the form,
+// the network layer, and the server share a single source of truth.
+type ContactFormValues = z.infer<typeof SubmitContactBody>;
 
 function Contact() {
-  const form = useForm<z.infer<typeof contactSchema>>({
-    resolver: zodResolver(contactSchema),
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(SubmitContactBody),
     defaultValues: { nombre: "", email: "", telefono: "", mensaje: "" },
   });
 
@@ -401,7 +511,7 @@ function Contact() {
     }
   });
 
-  const onSubmit = (data: z.infer<typeof contactSchema>) => {
+  const onSubmit = (data: ContactFormValues) => {
     contactMutation.mutate({ data });
   };
 
@@ -454,7 +564,7 @@ function Contact() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -476,7 +586,7 @@ function Contact() {
                     <FormItem>
                       <FormLabel>Teléfono <span className="text-muted-foreground font-normal">(Opcional)</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="+56 9 1234 5678" className="bg-background border-border" {...field} />
+                        <Input placeholder="+56 9 1234 5678" className="bg-background border-border" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -498,8 +608,8 @@ function Contact() {
                 )}
               />
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full md:w-auto px-8 bg-foreground text-background hover:bg-foreground/90 font-medium"
                 disabled={contactMutation.isPending}
               >
@@ -507,7 +617,7 @@ function Contact() {
               </Button>
 
               {success && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="p-4 bg-green-500/10 border border-green-500/20 text-green-500 text-sm rounded"
@@ -515,9 +625,9 @@ function Contact() {
                   Su mensaje ha sido enviado exitosamente. Nos pondremos en contacto a la brevedad.
                 </motion.div>
               )}
-              
+
               {contactMutation.isError && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="p-4 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded"
