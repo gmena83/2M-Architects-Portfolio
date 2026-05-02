@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useScrollPosition } from "@/hooks/use-scroll-position";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -120,10 +120,15 @@ function Navbar() {
 
   const scrollTo = (id: SectionId) => {
     setMobileMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
+    // Defer the scroll so React commits the menu-close state first; without
+    // this, the smooth-scroll on the same tick can race with the menu's
+    // exit animation and leave the menu visibly stuck open.
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    });
   };
 
   return (
@@ -170,7 +175,7 @@ function Navbar() {
 
         {/* Mobile Nav Toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground p-2 -mr-2"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
         >
@@ -182,9 +187,10 @@ function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.18 }}
             className="absolute top-full left-0 right-0 bg-background border-b border-border shadow-lg py-4 px-6 md:hidden flex flex-col gap-4"
           >
             {NAV_LINKS.map((link) => {
@@ -195,7 +201,7 @@ function Navbar() {
                   onClick={() => scrollTo(link.id)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "text-left text-lg font-medium py-2 border-b border-border/50 transition-colors",
+                    "text-left text-lg font-medium py-3 border-b border-border/50 transition-colors",
                     isActive ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
@@ -222,12 +228,12 @@ function Hero() {
         />
       </div>
 
-      <div className="relative z-10 text-center px-6 mt-20">
+      <div className="relative z-10 text-center px-6 mt-20 max-w-3xl mx-auto">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl md:text-7xl lg:text-8xl font-display font-light text-white mb-6 tracking-tighter"
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-light text-white mb-4 md:mb-6 tracking-tighter"
         >
           2M Arquitectos
         </motion.h1>
@@ -235,7 +241,7 @@ function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg md:text-xl lg:text-2xl text-white/80 font-light max-w-2xl mx-auto tracking-wide"
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/80 font-light max-w-2xl mx-auto tracking-wide"
         >
           Forma, materia y luz en el Pacífico Sur.
         </motion.p>
@@ -250,7 +256,7 @@ function Hero() {
 
 function Studio() {
   return (
-    <section id="estudio" className="py-32 px-6 md:px-12 bg-background">
+    <section id="estudio" className="py-20 md:py-32 px-6 md:px-12 bg-background">
       <div className="container mx-auto max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -258,11 +264,11 @@ function Studio() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-3xl md:text-5xl font-display font-light mb-16 border-b border-border pb-8">
+          <h2 className="text-3xl md:text-5xl font-display font-light mb-10 md:mb-16 border-b border-border pb-6 md:pb-8">
             Estudio
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-16">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-16">
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <h3 className="text-xl font-display text-foreground">Carlos Mena Manía</h3>
               <p>
@@ -319,6 +325,8 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
 function Lightbox({ project, onClose }: { project: Project, onClose: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const images = project.gallery;
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = `lightbox-title-${project.id}`;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -330,6 +338,19 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [images.length, onClose]);
 
+  // Lock background scroll and move focus into the dialog while open;
+  // restore both on close.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus?.();
+    };
+  }, []);
+
   const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
 
@@ -338,21 +359,39 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex items-center justify-center"
+      transition={{ duration: 0.18 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex flex-col"
     >
-      <button onClick={onClose} className="absolute top-6 right-6 text-foreground/70 hover:text-foreground z-50 p-2" aria-label="Cerrar">
-        <X size={32} strokeWidth={1} />
+      <button
+        ref={closeButtonRef}
+        onClick={onClose}
+        className="absolute top-4 right-4 md:top-6 md:right-6 text-foreground/70 hover:text-foreground z-50 p-2"
+        aria-label="Cerrar"
+      >
+        <X size={28} strokeWidth={1} className="md:hidden" />
+        <X size={32} strokeWidth={1} className="hidden md:block" />
       </button>
 
-      <button onClick={prevImage} className="absolute left-6 text-foreground/50 hover:text-foreground z-50 p-4" aria-label="Imagen anterior">
+      <button
+        onClick={prevImage}
+        className="hidden md:flex items-center justify-center absolute left-6 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground z-50 p-4"
+        aria-label="Imagen anterior"
+      >
         <ChevronLeft size={48} strokeWidth={1} />
       </button>
 
-      <button onClick={nextImage} className="absolute right-6 text-foreground/50 hover:text-foreground z-50 p-4" aria-label="Imagen siguiente">
+      <button
+        onClick={nextImage}
+        className="hidden md:flex items-center justify-center absolute right-6 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground z-50 p-4"
+        aria-label="Imagen siguiente"
+      >
         <ChevronRight size={48} strokeWidth={1} />
       </button>
 
-      <div className="relative w-full max-w-5xl max-h-[85vh] px-20 flex flex-col items-center">
+      <div className="flex-1 min-h-0 flex items-center justify-center px-4 pt-16 pb-4 md:px-24 md:pt-20 md:pb-20">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
@@ -361,14 +400,33 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             src={images[currentIndex]}
-            className="max-w-full max-h-[80vh] object-contain shadow-2xl"
+            alt={project.title}
+            className="max-w-full max-h-full object-contain shadow-2xl"
           />
         </AnimatePresence>
+      </div>
 
-        <div className="absolute bottom-[-40px] left-20 right-20 flex justify-between items-center text-sm font-light text-muted-foreground">
-          <span className="font-display text-foreground">{project.title}</span>
-          <span>{currentIndex + 1} / {images.length}</span>
-        </div>
+      <div className="shrink-0 px-4 md:px-12 pb-6 md:pb-8 pt-2 flex items-center gap-4 text-sm font-light text-muted-foreground">
+        <button
+          onClick={prevImage}
+          className="md:hidden flex items-center justify-center p-2 -ml-2 text-foreground/70 hover:text-foreground"
+          aria-label="Imagen anterior"
+        >
+          <ChevronLeft size={28} strokeWidth={1} />
+        </button>
+        <span id={titleId} className="font-display text-foreground truncate flex-1 text-center md:text-left">
+          {project.title}
+        </span>
+        <span className="tabular-nums shrink-0">
+          {currentIndex + 1} / {images.length}
+        </span>
+        <button
+          onClick={nextImage}
+          className="md:hidden flex items-center justify-center p-2 -mr-2 text-foreground/70 hover:text-foreground"
+          aria-label="Imagen siguiente"
+        >
+          <ChevronRight size={28} strokeWidth={1} />
+        </button>
       </div>
     </motion.div>
   );
@@ -384,9 +442,9 @@ function ProjectsLocation() {
   );
 
   return (
-    <section id="proyectos-ubicacion" className="py-24 px-6 md:px-12 bg-background border-t border-border">
+    <section id="proyectos-ubicacion" className="py-16 md:py-24 px-6 md:px-12 bg-background border-t border-border">
       <div className="container mx-auto max-w-7xl">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 md:gap-8">
           <h2 className="text-3xl md:text-5xl font-display font-light">
             Proyectos <span className="text-muted-foreground">· Por Ubicación</span>
           </h2>
@@ -409,7 +467,7 @@ function ProjectsLocation() {
           </div>
         </div>
 
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
           <AnimatePresence>
             {filteredProjects.map((project) => (
               <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} />
@@ -443,9 +501,9 @@ function ProjectsType() {
   );
 
   return (
-    <section id="proyectos-tipo" className="py-24 px-6 md:px-12 bg-background border-t border-border">
+    <section id="proyectos-tipo" className="py-16 md:py-24 px-6 md:px-12 bg-background border-t border-border">
       <div className="container mx-auto max-w-7xl">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 md:gap-8">
           <h2 className="text-3xl md:text-5xl font-display font-light">
             Proyectos <span className="text-muted-foreground">· Por Tipo</span>
           </h2>
@@ -468,7 +526,7 @@ function ProjectsType() {
           </div>
         </div>
 
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
           <AnimatePresence>
             {filteredProjects.map((project) => (
               <ProjectCard key={`type-${project.id}`} project={project} onClick={() => setSelectedProject(project)} />
@@ -493,8 +551,6 @@ function ProjectsType() {
 }
 
 function MediaThumbnail({ src, alt }: { src?: string; alt: string }) {
-  // Square thumbnail beside each media item. Tighter on mobile, slightly larger on md+.
-  // Falls back to a discrete placeholder mark when no image is provided.
   const baseClass =
     "w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-sm overflow-hidden border border-border/60 bg-card";
   if (src) {
@@ -523,7 +579,7 @@ function MediaThumbnail({ src, alt }: { src?: string; alt: string }) {
 
 function Media() {
   return (
-    <section id="media" className="py-32 px-6 md:px-12 bg-background border-t border-border">
+    <section id="media" className="py-20 md:py-32 px-6 md:px-12 bg-background border-t border-border">
       <div className="container mx-auto max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -531,14 +587,14 @@ function Media() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-3xl md:text-5xl font-display font-light mb-6 border-b border-border pb-8">
+          <h2 className="text-3xl md:text-5xl font-display font-light mb-6 border-b border-border pb-6 md:pb-8">
             Media
           </h2>
-          <p className="text-muted-foreground max-w-2xl mb-16 leading-relaxed">
+          <p className="text-muted-foreground max-w-2xl mb-12 md:mb-16 leading-relaxed">
             Publicaciones académicas, prensa gremial, registros oficiales y directorios profesionales que respaldan la trayectoria del estudio y de sus socios fundadores.
           </p>
 
-          <div className="space-y-20">
+          <div className="space-y-14 md:space-y-20">
             {mediaGroups.map((group) => (
               <motion.div
                 key={group.id}
@@ -547,7 +603,7 @@ function Media() {
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground mb-8 border-b border-border/60 pb-3">
+                <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground mb-6 md:mb-8 border-b border-border/60 pb-3">
                   {group.title}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
@@ -612,7 +668,7 @@ function Media() {
             ))}
           </div>
 
-          <p className="mt-20 text-xs text-muted-foreground font-light leading-relaxed border-t border-border pt-8">
+          <p className="mt-14 md:mt-20 text-xs text-muted-foreground font-light leading-relaxed border-t border-border pt-8">
             Repositorio compilado en mayo de 2026. Fuentes verificadas mediante búsqueda web multifuente.
           </p>
         </motion.div>
@@ -622,8 +678,6 @@ function Media() {
 }
 
 function Contact() {
-  // ContactFormSchema mirrors the generated API contract (same constraints,
-  // imported from @workspace/api-zod) but adds Spanish error messages.
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(ContactFormSchema),
     defaultValues: { nombre: "", email: "", telefono: "", mensaje: "" },
@@ -646,11 +700,11 @@ function Contact() {
   };
 
   return (
-    <section id="contacto" className="py-32 px-6 md:px-12 bg-card border-t border-border">
-      <div className="container mx-auto max-w-5xl grid md:grid-cols-2 gap-16">
+    <section id="contacto" className="py-20 md:py-32 px-6 md:px-12 bg-card border-t border-border">
+      <div className="container mx-auto max-w-5xl grid md:grid-cols-2 gap-12 md:gap-16">
         <div>
-          <h2 className="text-3xl md:text-5xl font-display font-light mb-8">Contacto</h2>
-          <p className="text-muted-foreground mb-12 max-w-sm">
+          <h2 className="text-3xl md:text-5xl font-display font-light mb-6 md:mb-8">Contacto</h2>
+          <p className="text-muted-foreground mb-10 md:mb-12 max-w-sm">
             Escríbanos para discutir su próximo proyecto. Nuestro equipo en Viña del Mar está preparado para materializar su visión.
           </p>
 
