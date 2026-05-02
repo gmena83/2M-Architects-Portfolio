@@ -303,8 +303,24 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.4 }}
-      className="group cursor-pointer"
-      onClick={onClick}
+      className="group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir galería del proyecto ${project.title}`}
+      onClick={(e) => {
+        // Ensure the card receives focus on click so it can be restored
+        // when the lightbox closes (some browsers don't focus non-button
+        // elements on click).
+        (e.currentTarget as HTMLElement).focus();
+        onClick();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).focus();
+          onClick();
+        }
+      }}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
         <img
@@ -325,14 +341,60 @@ function ProjectCard({ project, onClick }: { project: Project, onClick: () => vo
 function Lightbox({ project, onClose }: { project: Project, onClose: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const images = project.gallery;
+  const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = `lightbox-title-${project.id}`;
 
   useEffect(() => {
+    const FOCUSABLE_SELECTOR =
+      'a[href], area[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, object, embed, [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+    const getFocusable = (): HTMLElement[] => {
+      const root = dialogRef.current;
+      if (!root) return [];
+      return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => !el.hasAttribute('disabled') && el.offsetParent !== null,
+      );
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev + 1) % images.length);
-      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusable = getFocusable();
+        if (focusable.length === 0) {
+          e.preventDefault();
+          dialogRef.current?.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        const dialog = dialogRef.current;
+        const activeInside = !!(active && dialog && dialog.contains(active));
+
+        if (e.shiftKey) {
+          if (!activeInside || active === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (!activeInside || active === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -363,6 +425,8 @@ function Lightbox({ project, onClose }: { project: Project, onClose: () => void 
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      ref={dialogRef}
+      tabIndex={-1}
       className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex flex-col"
     >
       <button
