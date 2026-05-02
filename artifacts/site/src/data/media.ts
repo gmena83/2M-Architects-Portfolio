@@ -10,6 +10,7 @@ export type MediaItem = {
   year?: string;
   url?: string;
   links?: MediaLink[];
+  thumbnail?: string;
 };
 
 export type MediaGroup = {
@@ -31,6 +32,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "Revista AUCA Núm. 11 — Universidad de Chile",
         year: "1968",
         url: "https://revistaauca.uchile.cl/index.php/AUCA/article/view/58999",
+        thumbnail: "/images/media/auca.svg",
       },
       {
         title: "Los primeros planes intercomunales Metropolitanos de Chile, Vol. III",
@@ -39,6 +41,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "Repositorio Universidad de Chile / Libros UCh",
         year: "2025",
         url: "https://repositorio.uchile.cl/bitstream/2250/184594/1/Los-primeros-planes-intercomunales.pdf",
+        thumbnail: "/images/media/uch.svg",
       },
       {
         title:
@@ -47,6 +50,7 @@ export const mediaGroups: MediaGroup[] = [
           "Registro del artículo de la Revista AUCA en el repositorio científico hispanohablante Dialnet (Universidad de La Rioja).",
         source: "Dialnet",
         url: "https://dialnet.unirioja.es/servlet/articulo?codigo=10325526",
+        thumbnail: "/images/media/dialnet.svg",
       },
     ],
   },
@@ -62,6 +66,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "Coproch — Corporación Pro Viña del Mar",
         year: "2016",
         url: "https://www.coproch.cl/expertos-enjuician-los-mayores-problemas-que-explican-el-deterioro-de-vina-del-mar/",
+        thumbnail: "/images/media/coproch.svg",
       },
       {
         title:
@@ -71,6 +76,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "CChC Valparaíso",
         year: "2023",
         url: "https://cchc.cl/noticias/cena-anual-de-socios-y-socias-cchc-valparaiso-2023-camaraderia-y-distincion-a-la-excelencia-en-el-gremio/",
+        thumbnail: "/images/media/cchc.svg",
       },
       {
         title:
@@ -80,6 +86,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "CChC Valparaíso",
         year: "2023",
         url: "https://cchc.cl/w/noticias/encuentro-de-socios-y-socias-cchc-valparaiso-2023-una-camaraderia-que-vence-al-tiempo",
+        thumbnail: "/images/media/cchc.svg",
       },
       {
         title: "Distinciones Cena Anual de Socios CChC Valparaíso",
@@ -88,6 +95,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "Instagram CChC Valparaíso",
         year: "2025",
         url: "https://www.instagram.com/p/DPmYS-HkdDu/",
+        thumbnail: "/images/media/cchc-instagram.svg",
       },
       {
         title: "La Ruta del Café del Socio CChC Valparaíso",
@@ -95,6 +103,7 @@ export const mediaGroups: MediaGroup[] = [
           "Cobertura del programa Café del Socio, instancia de encuentro gremial entre socios del sector construcción y arquitectura de la región.",
         source: "Mundo Socios CChC",
         url: "https://mundosocioscchc.cl/la-ruta-del-cafe-del-socio-cchc-valparaiso/",
+        thumbnail: "/images/media/mundo-socios.svg",
       },
     ],
   },
@@ -108,6 +117,7 @@ export const mediaGroups: MediaGroup[] = [
           "Registro en el Portal ONDAC del proyecto residencial vinculado a Asesorías 2M Arquitectos y Asociados Limitada.",
         source: "Portal ONDAC",
         url: "https://portal.ondac.com/601/w3-article-165470.html",
+        thumbnail: "/images/media/ondac.svg",
       },
       {
         title: "Permisos DOM — Municipalidad de Viña del Mar",
@@ -136,6 +146,7 @@ export const mediaGroups: MediaGroup[] = [
             url: "https://transparencia.munivina.cl/download/0/27c6eb922c10d864534431706249db1b.html",
           },
         ],
+        thumbnail: "/images/media/vina.svg",
       },
       {
         title: "Permisos de Obras — Municipalidad de Concón",
@@ -160,6 +171,7 @@ export const mediaGroups: MediaGroup[] = [
             url: "https://transparenciaconcon.cl/upload/planilla/07_actosyresoluciones/Permiso%20de%20Obras%202024/Diciembre/RESOL2024-267.pdf",
           },
         ],
+        thumbnail: "/images/media/concon.svg",
       },
     ],
   },
@@ -173,6 +185,7 @@ export const mediaGroups: MediaGroup[] = [
           "Ficha empresarial oficial con datos de constitución, domicilio en Viña del Mar y actividad de consultoría arquitectónica.",
         source: "Mercantil.com",
         url: "https://www.mercantil.com/empresa/asesorias-2m-arquitectos-y-asociados-limitada/vina-del-mar/300464202/esp/",
+        thumbnail: "/images/media/mercantil.svg",
       },
       {
         title: "Asesorías 2M Arquitectos y Asociados Limitada — RUT empresa",
@@ -180,6 +193,7 @@ export const mediaGroups: MediaGroup[] = [
           "Registro del RUT y razón social del estudio en la base de datos de empresas chilenas.",
         source: "Genealog.cl",
         url: "https://www.genealog.cl/Geneanexus/empresa/CHILE/TNzYxTwMjQzMzUtNw-jTw/nombre-y-rut/ASESORIAS-2M-ARQUITECTOS-Y-ASOCIADOS-LIMITAD/",
+        thumbnail: "/images/media/genealog.svg",
       },
       {
         title: "Gonzalo J. Mena Améstiga — Directorio personal",
@@ -187,6 +201,7 @@ export const mediaGroups: MediaGroup[] = [
           "Ficha del directorio telefónico con datos de contacto profesional en Viña del Mar.",
         source: "abctelefonos.com",
         url: "https://www.abctelefonos.com/mena_amestica_gonzalo_j__cl_1069702",
+        thumbnail: "/images/media/abc.svg",
       },
       {
         title: "2M Arquitectos en LinkedIn",
@@ -211,6 +226,7 @@ export const mediaGroups: MediaGroup[] = [
             url: "https://www.linkedin.com/in/pablo-quezadaa",
           },
         ],
+        thumbnail: "/images/media/linkedin.svg",
       },
       {
         title: "Asesorías 2M Arquitectos y Asociados Limitada",
@@ -218,6 +234,7 @@ export const mediaGroups: MediaGroup[] = [
           "Ficha de la firma como empleador en el sector de arquitectura y construcción dentro de la plataforma laboral de Duoc UC.",
         source: "Duoc Laboral",
         url: "https://duoclaboral.cl/trabajar-en-asesorias-2m-arquitectos-y-asociados-limitada",
+        thumbnail: "/images/media/duoc.svg",
       },
     ],
   },
@@ -232,6 +249,7 @@ export const mediaGroups: MediaGroup[] = [
         source: "Revista AUCA — Universidad de Chile",
         year: "1968",
         url: "https://revistaauca.uchile.cl/index.php/AUCA/issue/view/5484",
+        thumbnail: "/images/media/auca.svg",
       },
       {
         title: "Los primeros planes intercomunales metropolitanos de Chile",
@@ -239,6 +257,7 @@ export const mediaGroups: MediaGroup[] = [
           "Acceso abierto al texto completo del libro a través del repositorio académico internacional Core.ac.uk.",
         source: "Core.ac.uk",
         url: "https://core.ac.uk/reader/650268053",
+        thumbnail: "/images/media/core.svg",
       },
     ],
   },

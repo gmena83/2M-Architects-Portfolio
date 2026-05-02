@@ -492,6 +492,35 @@ function ProjectsType() {
   );
 }
 
+function MediaThumbnail({ src, alt }: { src?: string; alt: string }) {
+  // Square thumbnail beside each media item. Tighter on mobile, slightly larger on md+.
+  // Falls back to a discrete placeholder mark when no image is provided.
+  const baseClass =
+    "w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-sm overflow-hidden border border-border/60 bg-card";
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className={cn(baseClass, "object-cover")}
+      />
+    );
+  }
+  return (
+    <div
+      role="img"
+      aria-label={alt}
+      className={cn(
+        baseClass,
+        "flex items-center justify-center text-muted-foreground/60 font-display text-xs tracking-[0.2em]",
+      )}
+    >
+      —
+    </div>
+  );
+}
+
 function Media() {
   return (
     <section id="media" className="py-32 px-6 md:px-12 bg-background border-t border-border">
@@ -523,56 +552,59 @@ function Media() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                   {group.items.map((item, idx) => (
-                    <div key={`${group.id}-${idx}`} className="flex flex-col">
-                      {item.url ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="group inline-flex items-start gap-2 text-foreground hover:text-muted-foreground transition-colors"
-                        >
-                          <h4 className="text-base md:text-lg font-display leading-snug">
+                    <div key={`${group.id}-${idx}`} className="flex gap-4">
+                      <MediaThumbnail src={item.thumbnail} alt={item.source} />
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="group inline-flex items-start gap-2 text-foreground hover:text-muted-foreground transition-colors"
+                          >
+                            <h4 className="text-base md:text-lg font-display leading-snug">
+                              {item.title}
+                            </h4>
+                            <ExternalLink
+                              size={14}
+                              strokeWidth={1.5}
+                              className="mt-1.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                            />
+                          </a>
+                        ) : (
+                          <h4 className="text-base md:text-lg font-display leading-snug text-foreground">
                             {item.title}
                           </h4>
-                          <ExternalLink
-                            size={14}
-                            strokeWidth={1.5}
-                            className="mt-1.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                          />
-                        </a>
-                      ) : (
-                        <h4 className="text-base md:text-lg font-display leading-snug text-foreground">
-                          {item.title}
-                        </h4>
-                      )}
-                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                        {item.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground/80 mt-3 font-light">
-                        {item.source}
-                        {item.year ? ` · ${item.year}` : ""}
-                      </p>
-                      {item.links && item.links.length > 0 && (
-                        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                          {item.links.map((link) => (
-                            <li key={link.url}>
-                              <a
-                                href={link.url}
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="group inline-flex items-center gap-1.5 text-xs text-foreground hover:text-muted-foreground transition-colors border-b border-border/60 hover:border-muted-foreground pb-0.5"
-                              >
-                                {link.label}
-                                <ExternalLink
-                                  size={11}
-                                  strokeWidth={1.5}
-                                  className="opacity-60 group-hover:opacity-100 transition-opacity"
-                                />
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                        )}
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                          {item.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground/80 mt-3 font-light">
+                          {item.source}
+                          {item.year ? ` · ${item.year}` : ""}
+                        </p>
+                        {item.links && item.links.length > 0 && (
+                          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                            {item.links.map((link) => (
+                              <li key={link.url}>
+                                <a
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                  className="group inline-flex items-center gap-1.5 text-xs text-foreground hover:text-muted-foreground transition-colors border-b border-border/60 hover:border-muted-foreground pb-0.5"
+                                >
+                                  {link.label}
+                                  <ExternalLink
+                                    size={11}
+                                    strokeWidth={1.5}
+                                    className="opacity-60 group-hover:opacity-100 transition-opacity"
+                                  />
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

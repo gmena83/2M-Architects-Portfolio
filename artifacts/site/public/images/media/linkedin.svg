@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="in">
+  <rect width="200" height="200" fill="#0A66C2"/>
+  <rect x="0.5" y="0.5" width="199" height="199" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>
+  
+  <text x="100" y="110" text-anchor="middle" dominant-baseline="middle" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="88" font-weight="500" letter-spacing="-1" fill="#FFFFFF">in</text>
+  <text x="100" y="158" text-anchor="middle" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="400" letter-spacing="2" fill="#FFFFFF" fill-opacity="0.7">LINKEDIN</text>
+  <line x1="80" y1="180" x2="120" y2="180" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1"/>
+</svg>
