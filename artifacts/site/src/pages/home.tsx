@@ -33,8 +33,7 @@ import { Menu, X, ExternalLink, Instagram, Linkedin } from "lucide-react";
 type SectionId =
   | "hero"
   | "estudio"
-  | "proyectos-ubicacion"
-  | "proyectos-tipo"
+  | "proyectos"
   | "media"
   | "contacto";
 
@@ -42,8 +41,7 @@ type NavLink = { id: Exclude<SectionId, "hero">; label: string };
 
 const NAV_LINKS: readonly NavLink[] = [
   { id: "estudio", label: "Estudio" },
-  { id: "proyectos-ubicacion", label: "Ubicación" },
-  { id: "proyectos-tipo", label: "Tipo" },
+  { id: "proyectos", label: "Proyectos" },
   { id: "media", label: "Media" },
   { id: "contacto", label: "Contacto" },
 ] as const;
@@ -51,14 +49,14 @@ const NAV_LINKS: readonly NavLink[] = [
 const SECTION_IDS: readonly SectionId[] = [
   "hero",
   "estudio",
-  "proyectos-ubicacion",
-  "proyectos-tipo",
+  "proyectos",
   "media",
   "contacto",
 ] as const;
 
 type LocationFilter = ProjectLocation | "all";
 type TypeFilter = ProjectType | "all";
+type YearFilter = number | "all";
 
 const LOCATION_FILTERS: readonly { id: LocationFilter; label: string }[] = [
   { id: "all", label: "Todos" },
@@ -346,48 +344,170 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-function ProjectsLocation() {
-  const [filter, setFilter] = useState<LocationFilter>("all");
+function FilterPill({
+  label,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center min-h-9 px-4 text-sm font-medium rounded-full transition-all duration-200 border",
+        isActive
+          ? "bg-foreground text-background border-foreground shadow-sm"
+          : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+
+function Projects() {
+  const [locationFilter, setLocationFilter] = useState<LocationFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [yearFilter, setYearFilter] = useState<YearFilter>("all");
+
   const { data: projectsData, isLoading } = useListProjects({
     query: { queryKey: ["public-projects"] },
   });
   const projects = useMemo(() => projectsData ?? [], [projectsData]);
 
-  const filteredProjects = useMemo(
-    () => (filter === "all" ? projects : projects.filter((p) => p.location === filter)),
-    [filter, projects],
-  );
+  // Build dynamic year filters from data
+  const yearFilters = useMemo(() => {
+    const years = [...new Set(projects.map((p) => p.year))].sort((a, b) => b - a);
+    return [
+      { id: "all" as YearFilter, label: "Todos" },
+      ...years.map((y) => ({ id: y as YearFilter, label: String(y) })),
+    ];
+  }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      if (locationFilter !== "all" && p.location !== locationFilter) return false;
+      if (typeFilter !== "all" && p.type !== typeFilter) return false;
+      if (yearFilter !== "all" && p.year !== yearFilter) return false;
+      return true;
+    });
+  }, [locationFilter, typeFilter, yearFilter, projects]);
+
+  const hasActiveFilters =
+    locationFilter !== "all" || typeFilter !== "all" || yearFilter !== "all";
+
+  const clearFilters = () => {
+    setLocationFilter("all");
+    setTypeFilter("all");
+    setYearFilter("all");
+  };
 
   return (
-    <section id="proyectos-ubicacion" className="py-16 md:py-24 px-6 md:px-12 bg-background border-t border-border">
+    <section id="proyectos" className="py-16 md:py-24 px-6 md:px-12 bg-background border-t border-border">
       <div className="container mx-auto max-w-7xl">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 md:gap-8">
-          <h2 className="text-3xl md:text-5xl font-display font-light">
-            Proyectos <span className="text-muted-foreground">· Por Ubicación</span>
-          </h2>
+        {/* Header */}
+        <div className="mb-10 md:mb-14">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 md:mb-10">
+            <h2 className="text-3xl md:text-5xl font-display font-light">
+              Proyectos
+            </h2>
 
-          <div className="flex flex-wrap gap-2">
-            {LOCATION_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={cn(
-                  "inline-flex items-center min-h-10 px-4 text-sm font-medium rounded-full transition-colors border",
-                  filter === f.id
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+            {/* Result count + Clear */}
+            <div className="flex items-center gap-3">
+              {!isLoading && (
+                <motion.span
+                  key={filteredProjects.length}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-muted-foreground tabular-nums"
+                >
+                  {filteredProjects.length}{" "}
+                  {filteredProjects.length === 1 ? "proyecto" : "proyectos"}
+                </motion.span>
+              )}
+              <AnimatePresence>
+                {hasActiveFilters && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border border-border hover:border-foreground rounded-full px-3 py-1.5"
+                  >
+                    <X size={12} strokeWidth={2} />
+                    Limpiar filtros
+                  </motion.button>
                 )}
-              >
-                {f.label}
-              </button>
-            ))}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Filter rows */}
+          <div className="space-y-5">
+            {/* Location */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground/70 min-w-[80px]">
+                Ubicación
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {LOCATION_FILTERS.map((f) => (
+                  <FilterPill
+                    key={f.id}
+                    label={f.label}
+                    isActive={locationFilter === f.id}
+                    onClick={() => setLocationFilter(f.id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Type */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground/70 min-w-[80px]">
+                Uso
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {TYPE_FILTERS.map((f) => (
+                  <FilterPill
+                    key={f.id}
+                    label={f.label}
+                    isActive={typeFilter === f.id}
+                    onClick={() => setTypeFilter(f.id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Year — only shown once data is loaded */}
+            {!isLoading && yearFilters.length > 1 && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <span className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground/70 min-w-[80px]">
+                  Año
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {yearFilters.map((f) => (
+                    <FilterPill
+                      key={String(f.id)}
+                      label={f.label}
+                      isActive={yearFilter === f.id}
+                      onClick={() => setYearFilter(f.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Grid */}
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={`skel-loc-${i}`} className="animate-pulse">
+                <div key={`skel-${i}`} className="animate-pulse">
                   <div className="aspect-[3/4] bg-muted mb-4" />
                   <div className="h-5 w-2/3 bg-muted mb-2" />
                   <div className="h-3 w-12 bg-muted" />
@@ -404,78 +524,10 @@ function ProjectsLocation() {
 
         {!isLoading && filteredProjects.length === 0 && (
           <div className="py-20 text-center text-muted-foreground">
-            No hay proyectos para esta ubicación.
+            No hay proyectos que coincidan con los filtros seleccionados.
           </div>
         )}
       </div>
-
-    </section>
-  );
-}
-
-function ProjectsType() {
-  const [filter, setFilter] = useState<TypeFilter>("all");
-  const { data: projectsData, isLoading } = useListProjects({
-    query: { queryKey: ["public-projects"] },
-  });
-  const projects = useMemo(() => projectsData ?? [], [projectsData]);
-
-  const filteredProjects = useMemo(
-    () => (filter === "all" ? projects : projects.filter((p) => p.type === filter)),
-    [filter, projects],
-  );
-
-  return (
-    <section id="proyectos-tipo" className="py-16 md:py-24 px-6 md:px-12 bg-background border-t border-border">
-      <div className="container mx-auto max-w-7xl">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 md:gap-8">
-          <h2 className="text-3xl md:text-5xl font-display font-light">
-            Proyectos <span className="text-muted-foreground">· Por Tipo</span>
-          </h2>
-
-          <div className="flex flex-wrap gap-2">
-            {TYPE_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={cn(
-                  "inline-flex items-center min-h-10 px-4 text-sm font-medium rounded-full transition-colors border",
-                  filter === f.id
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-transparent border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={`skel-type-${i}`} className="animate-pulse">
-                  <div className="aspect-[3/4] bg-muted mb-4" />
-                  <div className="h-5 w-2/3 bg-muted mb-2" />
-                  <div className="h-3 w-12 bg-muted" />
-                </div>
-              ))
-            : (
-              <AnimatePresence>
-                {filteredProjects.map((project) => (
-                  <ProjectCard key={`type-${project.id}`} project={project} />
-                ))}
-              </AnimatePresence>
-            )}
-        </motion.div>
-
-        {!isLoading && filteredProjects.length === 0 && (
-          <div className="py-20 text-center text-muted-foreground">
-            No hay proyectos para este tipo.
-          </div>
-        )}
-      </div>
-
     </section>
   );
 }
@@ -815,8 +867,7 @@ export default function Page() {
       <main>
         <Hero />
         <Studio />
-        <ProjectsLocation />
-        <ProjectsType />
+        <Projects />
         <Media />
         <Contact />
       </main>
